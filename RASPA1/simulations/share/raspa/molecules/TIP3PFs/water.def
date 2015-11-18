@@ -1,0 +1,24 @@
+tical constants: Temperature [T], Pressure [Pa], and Acentric factor [-]
+647.14
+22064000.00
+0.345
+#Number Of Atoms
+3
+# Number of groups
+1
+# water-group
+3
+flexible
+0 O_w     
+1 H_w 
+2 H_w
+# Chiral centers Bond  BondDipoles Bend  UrayBradley InvBend  Torsion Imp. Torsion Bond/Bond Stretch/Bend Bend/Bend Stretch/Torsion Bend/Torsion IntraVDW IntraCoulomb
+               0    2            0    1            0       0        0            0         0            0         0               0            0        0            0
+# Bond stretch: atom n1-n2, type, parameters
+0 1 HARMONIC_BOND 533020.66 0.96
+0 2 HARMONIC_BOND 533020.66 0.96
+# Bond bending: atom n1-n2-n3, type, parameters
+1 0 2 HARMONIC_BEND 34264.61 104.52
+# Number of config moves
+0
+

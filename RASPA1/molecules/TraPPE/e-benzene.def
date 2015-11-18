@@ -1,0 +1,47 @@
+# critical constants: Temperature [T], Pressure [Pa], and Acentric factor [-]
+617.15
+3609000
+0.353
+# Number Of Atoms
+13
+# Number of groups
+2
+# benzene-group
+12
+rigid
+0 C1_eb_aro   -0.1057    2.0621   -0.0132   
+1 C2_eb_aro    0.5952    0.8486   -0.0080
+2 C3_eb_aro    1.9966    0.8489    0.0028
+3 C4_eb_aro    2.6970    2.0627    0.0084
+4 C3_eb_aro    1.9961    3.2762    0.0032
+5 C2_eb_aro    0.5947    3.2759   -0.0076
+6 H1_eb_aro    0.0605   -0.0781   -0.0123
+7 H2_eb_aro    2.5318   -0.0776    0.0068
+8 H3_eb_aro    3.7670    2.0630    0.0167
+9 H2_eb_aro    2.5309    4.2030    0.0075
+10 H1_eb_aro   0.0595    4.2025   -0.0116
+11 CH2_eb_aro -1.6456    2.0618   -0.0250
+#ethyl group
+1
+flexible
+12 CH3_eb_aro
+# Chiral centers Bond  BondDipoles Bend  UrayBradley InvBend  Torsion Imp. Torsion Bond/Bond Stretch/Bend Bend/Bend Stretch/Torsion Bend/Torsion IntraVDW IntraCoulomb
+               0   13            0    1            0       0        0            0         0            0         0               0            0        0            0
+#Bond stretch: atom n1-n2, type, parameters
+0 1 RIGID_BOND
+1 2 RIGID_BOND
+2 3 RIGID_BOND
+3 4 RIGID_BOND
+4 5 RIGID_BOND
+5 0 RIGID_BOND
+1 6 RIGID_BOND
+2 7 RIGID_BOND
+3 8 RIGID_BOND
+4 9 RIGID_BOND
+5 10 RIGID_BOND
+0 11 RIGID_BOND 
+11 12 HARMONIC_BOND 96500 1.54
+#Bond bending
+0 11 12 HARMONIC_BEND 62500 114
+# Number of config moves
+0

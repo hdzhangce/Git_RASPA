@@ -1,0 +1,23 @@
+#number of pseudo atoms
+20
+#type      print   as    chem  oxidation   mass        charge   polarization B-factor radii  connectivity anisotropic anisotropic-type   tinker-type
+UNIT       no      H     H     -           1.0         1.0      0.0          1.0      1.0    0            0           relative           0
+Zn         yes     Zn    Zn    -           65.38       0.0      0.0          1.0      1.0    0            0           relative           0
+N          yes     N     N     -           14.0067     0.0      0.0          1.0      0.68   0            0           relative           0
+C          yes     C     C     -           12.0107     0.0      0.0          1.0      1.0    0            0           relative           0
+O          yes     O     O     -           15.9994     0.0      0.0          1.0      1.0    0            0           relative           0
+H          yes     H     H     -           1.00794     0.0      0.0          1.0      0.32   0            0           relative           0
+F          yes     F     F     -           18.9984     0.0      0.0          1.0      1.0    0            0           relative           0
+Ag         yes     Ag    Ag    -           107.8682    0.0      0.0          1.0      1.0    0            0           relative           0
+He         yes     He    He    -           4.002602    0.0      0.0          1.0      1.0    0            0           relative           0
+CH4_sp3    yes     C     C     -           16.04246    0.0      0.0          1.0      1.0    0            0           relative           0
+CH3_sp3    yes     C     C     -           15.03452    0.0      0.0          1.0      1.0    0            0           relative           0
+CH2_sp3    yes     C     C     -           14.02658    0.0      0.0          1.0      1.0    0            0           relative           0
+O_w        yes     O     O     -           15.9994    -0.834    0.0          1.0      0.5    2            0           relative           0
+H_w        yes     H     H     -           1.008       0.417    0.0          1.0      1.0    1            0           relative           0
+CH3_OH     yes     C     C     -           15.03452    0.265    0.0          1.0      1.0    1            0           relative           0
+CH3_CH     yes     C     C     -           15.03452    0.0      0.0          1.0      1.0    1            0           relative           0
+CH_CH2_OH  yes     C     C     -           14.02658    0.265    0.0          1.0      1.0    2            0           relative           0
+CH_CH2_CH  yes     C     C     -           14.02658    0.0      0.0          1.0      1.0    2            0           relative           0
+O_alc      yes     O     O     -           15.9994    -0.7      0.0          1.0      1.0    2            0           relative           0
+H_alc      yes     H     H     -           1.008       0.435    0.0          1.0      1.0    1            0           relative           0
