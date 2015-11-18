@@ -9,8 +9,8 @@
 # Alkane-group
 4
 flexible
-0 CH3_CH
-1 CH_CH2_OH
+0 CH3_alc2
+1 CH2_alc
 2 O_alc
 3 H_alc
 # Chiral centers Bond  BondDipoles Bend  UrayBradley InvBend  Torsion Imp. Torsion Bond/Bond Stretch/Bend Bend/Bend Stretch/Torsion Bend/Torsion IntraVDW IntraCoulomb
