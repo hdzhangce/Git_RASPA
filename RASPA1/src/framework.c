@@ -1976,220 +1976,6 @@ void WriteFrameworkDefinitionCIF(char * string)
     {
       sprintf(buffer,"Movies/System_%d",CurrentSystem);
       mkdir(buffer,S_IRWXU);
-
-      sprintf(buffer,"Movies/System_%d/Framework_%d_%s_%d_%d_%d_VASP%s.cif",
-              CurrentSystem,CurrentFramework,string,
-              NumberOfUnitCells[CurrentSystem].x,NumberOfUnitCells[CurrentSystem].y,NumberOfUnitCells[CurrentSystem].z,
-              FileNameAppend);
-      
-      FilePtr=fopen(buffer,"w");
-      
-      fprintf(FilePtr,"data_%s\n\n",Framework[CurrentSystem].Name[CurrentFramework]);
-      
-      fprintf(FilePtr,"_audit_creation_method RASPA-1.0\n");
-      fprintf(FilePtr,"_audit_creation_date %d-%d-%d\n",loctime->tm_year+1900,loctime->tm_mon+1,loctime->tm_mday);
-      p=getpwuid(geteuid());
-      if(p)
-      {
-        n=strcspn(p->pw_gecos,",");
-        memcpy(fullname,p->pw_gecos,n);
-        fullname[n] = '\0';
-        fprintf(FilePtr,"_audit_author_name '%s'\n",fullname);
-      }
-      fprintf(FilePtr,"\n");
-      
-      if(Framework[CurrentSystem].NumberOfCitations[CurrentFramework]>0)
-      {
-        //for(i=0;i<Framework[CurrentSystem].NumberOfCitations[CurrentFramework];i++)
-        if(Framework[CurrentSystem].NumberOfCitations[CurrentFramework]==1)
-        {
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationId)>0)
-            fprintf(FilePtr,"_citation_id                 %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationId);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationAuthorName)>0)
-            fprintf(FilePtr,"_citation_author_name        '%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationAuthorName);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationCoordinateLinkage)>0)
-            fprintf(FilePtr,"_citation_coordinate_linkage %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationCoordinateLinkage);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationTitle)>0)
-            fprintf(FilePtr,"_citation_title              '%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationTitle);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationCountry)>0)
-            fprintf(FilePtr,"_citation_country            '%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationCountry);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalAbbrev)>0)
-            fprintf(FilePtr,"_citation_journal_abbrev     '%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalAbbrev);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalVolume)>0)
-            fprintf(FilePtr,"_citation_journal_volume     %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalVolume);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalIssue)>0)
-            fprintf(FilePtr,"_citation_journal_issue      %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalIssue);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationPageFirst)>0)
-            fprintf(FilePtr,"_citation_page_first         %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationPageFirst);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationPageLast)>0)
-            fprintf(FilePtr,"_citation_page_last          %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationPageLast);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationYear)>0)
-            fprintf(FilePtr,"_citation_year               %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationYear);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalID_ASTM)>0)
-            fprintf(FilePtr,"_citation_journal_ID_ASTM    %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalID_ASTM);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalID_ISSN)>0)
-            fprintf(FilePtr,"_citation_journal_ID_ISSN    %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalID_ISSN);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookTitle)>0)
-            fprintf(FilePtr,"_citation_book_title         '%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookTitle);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookPublisher)>0)
-            fprintf(FilePtr,"_citation_book_publisher     '%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookPublisher);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookID_ISBN)>0)
-            fprintf(FilePtr,"_citation_book_ID_ISBN       %s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookID_ISBN);
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationSpecialDetails)>0)
-            fprintf(FilePtr,"_citation_special_details    '%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationSpecialDetails);
-          fprintf(FilePtr,"\n");
-        }
-        else
-        {
-          fprintf(FilePtr,"loop_\n");
-          
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationId)>0) fprintf(FilePtr,"_citation_id\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationAuthorName)>0) fprintf(FilePtr,"_citation_author_name\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationCoordinateLinkage)>0) fprintf(FilePtr,"_citation_coordinate_linkage\n"); 
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationTitle)>0) fprintf(FilePtr,"_citation_title\n"); 
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationCountry)>0) fprintf(FilePtr,"_citation_country\n"); 
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalAbbrev)>0) fprintf(FilePtr,"_citation_journal_abbrev\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalVolume)>0) fprintf(FilePtr,"_citation_journal_volume\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalIssue)>0) fprintf(FilePtr,"_citation_journal_issue\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationPageFirst)>0) fprintf(FilePtr,"_citation_page_first\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationPageLast)>0) fprintf(FilePtr,"_citation_page_last\n"); 
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationYear)>0) fprintf(FilePtr,"_citation_year\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalID_ASTM)>0) fprintf(FilePtr,"_citation_journal_ID_ASTM\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationJournalID_ISSN)>0) fprintf(FilePtr,"_citation_journal_ID_ISSN\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookTitle)>0) fprintf(FilePtr,"_citation_book_title\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookPublisher)>0) fprintf(FilePtr,"_citation_book_publisher\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationBookID_ISBN)>0) fprintf(FilePtr,"_citation_book_ID_ISBN\n");
-          if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][0].CitationSpecialDetails)>0) fprintf(FilePtr,"_citation_special_details\n");
-          
-          for(i=0;i<Framework[CurrentSystem].NumberOfCitations[CurrentFramework];i++)
-          {
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationId)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationId);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationAuthorName)>0)
-              fprintf(FilePtr,"'%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationAuthorName);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationCoordinateLinkage)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationCoordinateLinkage);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationTitle)>0)
-              fprintf(FilePtr,"'%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationTitle);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationCountry)>0)
-              fprintf(FilePtr,"'%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationCountry);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalAbbrev)>0)
-              fprintf(FilePtr,"'%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalAbbrev);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalVolume)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalVolume);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalIssue)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalIssue);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationPageFirst)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationPageFirst);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationPageLast)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationPageLast);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationYear)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationYear);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalID_ASTM)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalID_ASTM);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalID_ISSN)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationJournalID_ISSN);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationBookTitle)>0)
-              fprintf(FilePtr,"'%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationBookTitle);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationBookPublisher)>0)
-              fprintf(FilePtr,"'%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationBookPublisher);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationBookID_ISBN)>0)
-              fprintf(FilePtr,"%s\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationBookID_ISBN);
-            if(strlen(Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationSpecialDetails)>0)
-              fprintf(FilePtr,"'%s'\n",Framework[CurrentSystem].CitationInformation[CurrentFramework][i].CitationSpecialDetails);
-          }
-          fprintf(FilePtr,"\n");
-        }
-      }
-      
-      
-      fprintf(FilePtr,"_cell_length_a    %g\n",(REAL)NumberOfUnitCells[CurrentSystem].x*UnitCellSize[CurrentSystem].x);
-      fprintf(FilePtr,"_cell_length_b    %g\n",(REAL)NumberOfUnitCells[CurrentSystem].y*UnitCellSize[CurrentSystem].y);
-      fprintf(FilePtr,"_cell_length_c    %g\n",(REAL)NumberOfUnitCells[CurrentSystem].z*UnitCellSize[CurrentSystem].z);
-      fprintf(FilePtr,"_cell_angle_alpha %g\n",(REAL)AlphaAngle[CurrentSystem]*RAD2DEG);
-      fprintf(FilePtr,"_cell_angle_beta  %g\n",(REAL)BetaAngle[CurrentSystem]*RAD2DEG);
-      fprintf(FilePtr,"_cell_angle_gamma %g\n",(REAL)GammaAngle[CurrentSystem]*RAD2DEG);
-      fprintf(FilePtr,"_cell_volume      %g\n\n",(REAL)Volume[CurrentSystem]);
-      
-      switch(SpaceGroupData[Framework[CurrentSystem].SpaceGroupIdentifier[CurrentFramework]].CrystalSystem)
-      {
-        case TRICLINIC_SPACEGROUP:
-          fprintf(FilePtr,"_symmetry_cell_setting          triclinic\n");
-          break;
-        case MONOCLINIC_SPACEGROUP:
-          fprintf(FilePtr,"_symmetry_cell_setting          monoclinic\n");
-          break;
-        case ORTHORHOMBIC_SPACEGROUP:
-          fprintf(FilePtr,"_symmetry_cell_setting          orthorhombic\n");
-          break;
-        case TETRAGONAL_SPACEGROUP:
-          fprintf(FilePtr,"_symmetry_cell_setting          tetragonal\n");
-          break;
-        case TRIGONAL_SPACEGROUP:
-          fprintf(FilePtr,"_symmetry_cell_setting          trigonal\n");
-          break;
-        case HEXAGONAL_SPACEGROUP:
-          fprintf(FilePtr,"_symmetry_cell_setting          hexagonal\n");
-          break;
-        case CUBIC_SPACEGROUP:
-          fprintf(FilePtr,"_symmetry_cell_setting          cubic\n");
-          break;
-      }
-      fprintf(FilePtr,"_symmetry_space_group_name_Hall '%s'\n",SpaceGroupData[1].HallSpaceGroupSymbol);
-      fprintf(FilePtr,"_symmetry_space_group_name_H-M  '%s'\n",SpaceGroupData[1].ShortInternationalHermannMauguinSpaceGroupSymbol);
-      fprintf(FilePtr,"_symmetry_Int_Tables_number     %d\n\n",SpaceGroupData[1].Number);
-      
-      
-      fprintf(FilePtr,"_symmetry_equiv_pos_as_xyz 'x,y,z'\n");
-      fprintf(FilePtr,"\n");
-      
-      
-      fprintf(FilePtr,"loop_\n");
-      fprintf(FilePtr,"_atom_site_label\n");
-      fprintf(FilePtr,"_atom_site_type_symbol\n");
-      fprintf(FilePtr,"_atom_site_fract_x\n");
-      fprintf(FilePtr,"_atom_site_fract_y\n");
-      fprintf(FilePtr,"_atom_site_fract_z\n");
-      fprintf(FilePtr,"_atom_site_charge\n");
-      
-      for(i=0;i<NumberOfPseudoAtoms;i++)
-        AtomIdentifier[i]=0;
-     
-      for(i=0;i<NumberOfPseudoAtoms;i++)
-      {
-        for(j=0;j<Framework[CurrentSystem].NumberOfAtoms[CurrentFramework];j++)
-        {
-          if((Framework[CurrentSystem].Atoms[CurrentFramework][j].Type==i)&&(PseudoAtoms[Framework[CurrentSystem].Atoms[CurrentFramework][j].Type].PrintToPDB))
-          {
-            pos=ConvertFromXYZtoABC(Framework[CurrentSystem].Atoms[CurrentFramework][j].Position);
-
-            if(Framework[CurrentSystem].AddAtomNumberCodeToLabel[CurrentFramework])
-            {
-              AtomIdentifier[i]++;
-              sprintf(name,"%s%d",PseudoAtoms[i].Name,AtomIdentifier[i]);
-            }
-            else
-              sprintf(name,"%s",PseudoAtoms[i].Name);
-
-            strcpy(symbol,PseudoAtoms[i].ChemicalElement);
-            strcat(symbol,PseudoAtoms[i].OxidationStateString);
-
-            if(fabs(pos.x)<1e-10) pos.x=fabs(pos.x);
-            if(fabs(pos.y)<1e-10) pos.y=fabs(pos.y);
-            if(fabs(pos.z)<1e-10) pos.z=fabs(pos.z);
-
-            fprintf(FilePtr,"%-8s %-5s % -12g % -12g % -12g % -12g\n",
-                    name,
-                    symbol,
-                    fabs(pos.x)<1e-12?0.0:pos.x,
-                    fabs(pos.y)<1e-12?0.0:pos.y,
-                    fabs(pos.z)<1e-12?0.0:pos.z,
-                    Framework[CurrentSystem].Atoms[CurrentFramework][i].Charge);
-          }
-        }
-      }
-      fprintf(FilePtr,"\n\n");
-      fclose(FilePtr);
       
       sprintf(buffer,"Movies/System_%d/Framework_%d_%s_%d_%d_%d_P1%s.cif",
               CurrentSystem,CurrentFramework,string,
@@ -2361,10 +2147,12 @@ void WriteFrameworkDefinitionCIF(char * string)
       fprintf(FilePtr,"loop_\n");
       fprintf(FilePtr,"_atom_site_label\n");
       fprintf(FilePtr,"_atom_site_type_symbol\n");
+      fprintf(FilePtr,"_atom_site_hybridization\n");
       fprintf(FilePtr,"_atom_site_fract_x\n");
       fprintf(FilePtr,"_atom_site_fract_y\n");
       fprintf(FilePtr,"_atom_site_fract_z\n");
       fprintf(FilePtr,"_atom_site_charge\n");
+      fprintf(FilePtr,"_atom_site_polarization\n");
       
       for(i=0;i<NumberOfPseudoAtoms;i++)
         AtomIdentifier[i]=0;
@@ -2384,15 +2172,18 @@ void WriteFrameworkDefinitionCIF(char * string)
           sprintf(name,"%s",PseudoAtoms[Type].Name);
 
         strcpy(symbol,PseudoAtoms[Type].ChemicalElement);
-        strcat(symbol,PseudoAtoms[Type].OxidationStateString);
+        strcat(symbol,PseudoAtoms[Type].OxidationStateString),
 
-        fprintf(FilePtr,"%-8s %-5s % -12g % -12g % -12g % -12g\n",
+        fprintf(FilePtr,"%-8s %-5s %-4s % -12g % -12g % -12g % -12g % -12g\n",
                 name,
+                //PseudoAtoms[Type].PrintToPDBName,
                 symbol,
+                PseudoAtoms[Type].Hybridization==SP3?"sp3":(PseudoAtoms[Type].Hybridization==SP2?"sp2":"sp"),
                 fabs(pos.x)<1e-12?0.0:pos.x,
                 fabs(pos.y)<1e-12?0.0:pos.y,
                 fabs(pos.z)<1e-12?0.0:pos.z,
-                Framework[CurrentSystem].Atoms[CurrentFramework][i].Charge);
+                Framework[CurrentSystem].Atoms[CurrentFramework][i].Charge,
+                ComputePolarization?PseudoAtoms[Type].Polarization*COULOMBIC_CONVERSION_FACTOR:0);
       }
       
       fprintf(FilePtr,"\n\n");
@@ -2572,10 +2363,12 @@ void WriteFrameworkDefinitionCIF(char * string)
         fprintf(FilePtr,"loop_\n");
         fprintf(FilePtr,"_atom_site_label\n");
         fprintf(FilePtr,"_atom_site_type_symbol\n");
+        fprintf(FilePtr,"_atom_site_hybridization\n");
         fprintf(FilePtr,"_atom_site_fract_x\n");
         fprintf(FilePtr,"_atom_site_fract_y\n");
         fprintf(FilePtr,"_atom_site_fract_z\n");
         fprintf(FilePtr,"_atom_site_charge\n");
+        fprintf(FilePtr,"_atom_site_polarization\n");
         
         for(i=0;i<NumberOfPseudoAtoms;i++)
           AtomIdentifier[i]=0;
@@ -2595,17 +2388,16 @@ void WriteFrameworkDefinitionCIF(char * string)
           // for asymmetric atoms the position is already in fractional coordinates
           pos=Framework[CurrentSystem].AtomsAsymmetric[CurrentFramework][i].Position;
           
-          //fprintf(FilePtr,"%-8s %-5s %-4s % -12g % -12g % -12g % -7g % -7g\n",
-          fprintf(FilePtr,"%-8s %-5s % -12g % -12g % -12g % -7g\n",
+          fprintf(FilePtr,"%-8s %-5s %-4s % -12g % -12g % -12g % -7g % -7g\n",
                   name,
                   //PseudoAtoms[Type].PrintToPDBName,
                   PseudoAtoms[Type].ChemicalElement,
-                  //PseudoAtoms[Type].Hybridization==SP3?"sp3":(PseudoAtoms[Type].Hybridization==SP2?"sp2":"sp"),
+                  PseudoAtoms[Type].Hybridization==SP3?"sp3":(PseudoAtoms[Type].Hybridization==SP2?"sp2":"sp"),
                   fabs(pos.x)<1e-12?0.0:pos.x,
                   fabs(pos.y)<1e-12?0.0:pos.y,
                   fabs(pos.z)<1e-12?0.0:pos.z,
-                  PseudoAtoms[Type].Charge1);
-                  //ComputePolarization?PseudoAtoms[Type].Polarization*COULOMBIC_CONVERSION_FACTOR:0);
+                  PseudoAtoms[Type].Charge1,
+                  ComputePolarization?PseudoAtoms[Type].Polarization*COULOMBIC_CONVERSION_FACTOR:0);
         }
         
         fprintf(FilePtr,"\n\n");
@@ -3479,8 +3271,7 @@ void WriteFrameworkDefinitionVASP(char *string)
         sprintf(buffer,"Movies/System_%d/Framework_%d_%s%s.vasp",CurrentSystem,CurrentFramework,string,FileNameAppend);
         FilePtr=fopen(buffer,"w");
 
-        fprintf(FilePtr,"# %s\n",Framework[CurrentSystem].Name[0]);
-/*
+        fprintf(FilePtr,"# %s: ",Framework[CurrentSystem].Name[0]);
         for(i=0;i<NumberOfPseudoAtoms;i++)
         {
           count=0;
@@ -3490,24 +3281,11 @@ void WriteFrameworkDefinitionVASP(char *string)
           if(count>0) fprintf(FilePtr,"%s (%d) ",PseudoAtoms[i].ChemicalElement,count);
         }
         fprintf(FilePtr,"\n");
-*/
 
         fprintf(FilePtr,"%f\n",1.0);
         fprintf(FilePtr,"%20.16f %20.16f %20.10f\n",Box[CurrentSystem].ax,Box[CurrentSystem].ay,Box[CurrentSystem].az);
         fprintf(FilePtr,"%20.16f %20.16f %20.10f\n",Box[CurrentSystem].bx,Box[CurrentSystem].by,Box[CurrentSystem].bz);
         fprintf(FilePtr,"%20.16f %20.16f %20.10f\n",Box[CurrentSystem].cx,Box[CurrentSystem].cy,Box[CurrentSystem].cz);
-
-        for(i=0;i<NumberOfPseudoAtoms;i++)
-          for(j=0;j<Framework[CurrentSystem].NumberOfAtoms[CurrentFramework];j++)
-          {
-            if((Framework[CurrentSystem].Atoms[CurrentFramework][j].Type==i)&&(PseudoAtoms[Framework[CurrentSystem].Atoms[CurrentFramework][j].Type].PrintToPDB))
-            {
-              fprintf(FilePtr,"%s ",PseudoAtoms[i].ChemicalElement);
-              break;
-            }
-          }
-        fprintf(FilePtr,"\n");
- 
 
         for(i=0;i<NumberOfPseudoAtoms;i++)
         {
@@ -9392,7 +9170,7 @@ int CheckSurfaceAreaOverlap(int typeA,VECTOR posA,int skipf,int skipfa,int skipc
   VECTOR dr,posB;
   REAL rr,well_depth_factor;
 
-  if(BlockedPocket(posA)||(!ValidCartesianPoint(CurrentComponent,posA)))
+  if(BlockedPocket(posA))
     return TRUE;
 
   well_depth_factor=Framework[CurrentSystem].SurfaceAreaProbeDistance;

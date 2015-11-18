@@ -135,8 +135,6 @@ VECTOR RotateVectorAboutX(VECTOR vec,REAL angle);
 VECTOR RotateVectorAboutY(VECTOR vec,REAL angle);
 VECTOR RotateVectorAboutZ(VECTOR vec,REAL angle);
 
-void RandomArrayRotationMatrix(VECTOR *Cord,int n);
-
 VECTOR GenerateRandomCylinderPoint(int dir,VECTOR origin,VECTOR rotation,REAL radius);
 VECTOR TransformMapping(REAL_MATRIX3x3 m,VECTOR t);
 

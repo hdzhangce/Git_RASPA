@@ -48,19 +48,6 @@
 
 REAL MovieScale;
 
-VECTOR VTKFractionalFrameworkAtomsMin;
-VECTOR VTKFractionalFrameworkAtomsMax;
-VECTOR VTKFractionalFrameworkBondsMin;
-VECTOR VTKFractionalFrameworkBondsMax;
-VECTOR VTKFractionalAdsorbateComMin;
-VECTOR VTKFractionalAdsorbateComMax;
-VECTOR VTKFractionalCationComMin;
-VECTOR VTKFractionalCationComMax;
-
-int FreeEnergyAveragingTypeVTK;
-int DensityAveragingTypeVTK;
-int AverageDensityOverUnitCellsVTK;
-
 int WriteVTKGrids;
 
 typedef struct color
@@ -405,14 +392,12 @@ void WriteVTK(int system)
   REAL r,Bond_length,max,value;
   REAL tr[27][3]={{-1,-1,-1},{-1,-1,0},{-1,-1,1},{-1,0,-1},{-1,0,0},{-1,0,1},{-1,1,-1},{-1,1,0},{-1,1,1},{0,-1,-1},{0,-1,0},{0,-1,1},{0,0,-1},{0,0,0},{0,0,1},{0,1,-1},{0,1,0},{0,1,1},{1,-1,-1},{1,-1,0},{1,-1,1},{1,0,-1},{1,0,0},{1,0,1},{1,1,-1},{1,1,0},{1,1,1}};
 
-  int **Connectivity;
-  int ***Neighbours;
-  VECTOR **Positions;
+  int *Connectivity;
+  int **Neighbours;
+  VECTOR *Positions;
   int *AtomTypes;
-  int *NumberOfListAtoms;
+  int NumberOfListAtoms;
   int MaxNumberOfListAtoms;
-  int TotalNumberOfListAtoms;
-  int index;
 
   CurrentSystem=system;
 
@@ -480,7 +465,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+      (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   C.x=1.0;
   C.y=0.0;
@@ -488,7 +474,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+      (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   C.x=1.0;
   C.y=1.0;
@@ -496,7 +483,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+     (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   C.x=0.0;
   C.y=1.0;
@@ -504,7 +492,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+       (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   C.x=0.0;
   C.y=0.0;
@@ -512,7 +501,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+      (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   C.x=1.0;
   C.y=0.0;
@@ -520,7 +510,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+       (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   C.x=1.0;
   C.y=1.0;
@@ -528,7 +519,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+      (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   C.x=0.0;
   C.y=1.0;
@@ -536,7 +528,8 @@ void WriteVTK(int system)
   pos.x=Box[system].ax*C.x+Box[system].bx*C.y+Box[system].cx*C.z;
   pos.y=Box[system].ay*C.x+Box[system].by*C.y+Box[system].cy*C.z;
   pos.z=Box[system].az*C.x+Box[system].bz*C.y+Box[system].cz*C.z;
-  fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+  fprintf(FilePtr,"%lf %lf %lf\n",(double)((pos.x-shift.x)*(REAL)(SIZE_X-y)/max),(double)((pos.y-shift.y)*(REAL)(SIZE_Y-y)/max),
+      (double)((pos.z-shift.z)*(REAL)(SIZE_Z-y)/max));
 
   fprintf(FilePtr,"LINES 6 36\n");
   fprintf(FilePtr,"5 0 1 2 3 0\n");
@@ -554,31 +547,22 @@ void WriteVTK(int system)
   fac.z=Box[system].cz/MAX3(Box[system].ax,Box[system].by,Box[system].cz);
 
   // allocate memory for connectivity list
-  MaxNumberOfListAtoms=27*Framework[system].TotalNumberOfAtoms;
-  NumberOfListAtoms=(int*)calloc(Framework[system].NumberOfFrameworks,sizeof(int));
-  Positions=(VECTOR**)calloc(Framework[system].NumberOfFrameworks,sizeof(VECTOR*));
+  MaxNumberOfListAtoms=8*Framework[system].TotalNumberOfAtoms;
+  Connectivity=(int*)calloc(MaxNumberOfListAtoms,sizeof(int));
+  Positions=(VECTOR*)calloc(MaxNumberOfListAtoms,sizeof(VECTOR));
   AtomTypes=(int*)calloc(MaxNumberOfListAtoms,sizeof(int));
+  Neighbours=(int**)calloc(MaxNumberOfListAtoms,sizeof(int*));
 
-  Neighbours=(int***)calloc(MaxNumberOfListAtoms,sizeof(int**));
-  Connectivity=(int**)calloc(Framework[system].NumberOfFrameworks,sizeof(int*));
-
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
+  for(i=0;i<MaxNumberOfListAtoms;i++)
   {
-    Positions[f1]=(VECTOR*)calloc(MaxNumberOfListAtoms,sizeof(VECTOR));
-    Connectivity[f1]=(int*)calloc(MaxNumberOfListAtoms,sizeof(int));
-    Neighbours[f1]=(int**)calloc(MaxNumberOfListAtoms,sizeof(int*));
-    for(i=0;i<MaxNumberOfListAtoms;i++)
-    {
-      Neighbours[f1][i]=(int*)calloc(64,sizeof(int));
-      for(l=0;l<60;l++)
-        Neighbours[f1][i][l]=-1;
-    }
+    Neighbours[i]=(int*)calloc(64,sizeof(int));
+    for(l=0;l<60;l++)
+      Neighbours[i][l]=-1;
   }
 
-  TotalNumberOfListAtoms=0;
+  NumberOfListAtoms=0;
   for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
   {
-    NumberOfListAtoms[f1]=0;
     // make bond list
     for(i=0;i<Framework[system].NumberOfAtoms[f1];i++)
     {
@@ -604,17 +588,37 @@ void WriteVTK(int system)
           t.y=s.y+tr[j][1];
           t.z=s.z+tr[j][2];
 
-          if((t.x>=VTKFractionalFrameworkAtomsMin.x)&&(t.x<=VTKFractionalFrameworkAtomsMax.x)&&
-             (t.y>=VTKFractionalFrameworkAtomsMin.y)&&(t.y<=VTKFractionalFrameworkAtomsMax.y)&&
-             (t.z>=VTKFractionalFrameworkAtomsMin.z)&&(t.z<=VTKFractionalFrameworkAtomsMax.z))
+          if((t.x>=-0.001)&&(t.x<=1.001)&&(t.y>=-0.001)&&(t.y<=1.001)&&(t.z>=-0.001)&&(t.z<=1.001))
           {
-            Positions[f1][NumberOfListAtoms[f1]]=ConvertFromABCtoXYZ(t);
-            AtomTypes[NumberOfListAtoms[f1]]=Type;
-            NumberOfListAtoms[f1]++;
-            TotalNumberOfListAtoms++;
+            Positions[NumberOfListAtoms]=ConvertFromABCtoXYZ(t);
+            AtomTypes[NumberOfListAtoms]=Type;
+            NumberOfListAtoms++;
           }
         }
       }
+    }
+  }
+
+  //printf("NumberOfListAtoms: %d\n",NumberOfListAtoms);
+
+  // make bond list
+  for(i=0;i<NumberOfListAtoms;i++)
+  {
+    posA=Positions[i];
+    Connectivity[i]=0;
+    for(j=0;j<NumberOfListAtoms;j++)
+    {
+      posB=Positions[j];
+
+      Bond_length=0.56+PseudoAtoms[AtomTypes[i]].Radius+PseudoAtoms[AtomTypes[j]].Radius;
+      dr.x=posA.x-posB.x;
+      dr.y=posA.y-posB.y;
+      dr.z=posA.z-posB.z;
+
+      // No boundary condition
+      r=sqrt(SQR(dr.x)+SQR(dr.y)+SQR(dr.z));
+      if((i!=j)&&(r<Bond_length))
+         Neighbours[i][Connectivity[i]++]=j;
     }
   }
 
@@ -636,178 +640,59 @@ void WriteVTK(int system)
   fprintf(FilePtr,"ASCII\n");
   fprintf(FilePtr,"\n");
   fprintf(FilePtr,"DATASET POLYDATA\n");
-  fprintf(FilePtr,"POINTS %d float\n",TotalNumberOfListAtoms);
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
+  fprintf(FilePtr,"POINTS %d float\n",NumberOfListAtoms);
+  for(i=0;i<NumberOfListAtoms;i++)
   {
-    for(i=0;i<NumberOfListAtoms[f1];i++)
+    pos.x=Positions[i].x-flexible_drift.x;
+    pos.y=Positions[i].y-flexible_drift.y;
+    pos.z=Positions[i].z-flexible_drift.z;
+    fprintf(FilePtr,"%lf %lf %lf\n",
+        (double)((pos.x-shift.x)*(REAL)(SIZE_X-1)/max),
+        (double)((pos.y-shift.y)*(REAL)(SIZE_Y-1)/max),
+        (double)((pos.z-shift.z)*(REAL)(SIZE_Z-1)/max));
+
+  }
+
+  // write zeolite connection tubes
+  nr_bonds=0;
+  for(i=0;i<NumberOfListAtoms;i++)
+    nr_bonds+=Connectivity[i];
+  fprintf(FilePtr,"LINES %d %d\n",nr_bonds/2,nr_bonds*3/2);
+  //fprintf(FilePtr,"LINES %d %d\n",nr_bonds,nr_bonds*3);
+  for(i=0;i<NumberOfListAtoms;i++)
+  {
+    for(j=0;j<Connectivity[i];j++)
     {
-      pos.x=Positions[f1][i].x-flexible_drift.x;
-      pos.y=Positions[f1][i].y-flexible_drift.y;
-      pos.z=Positions[f1][i].z-flexible_drift.z;
-      fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
+      if(i<Neighbours[i][j]) // avoid double counting
+      {
+        fprintf(FilePtr,"%d %d %d\n",
+          2,
+          i,
+          Neighbours[i][j]);
+      }
     }
   }
 
   // print the scaling factors for the size of atoms
-  fprintf(FilePtr,"POINT_DATA %d\n",TotalNumberOfListAtoms);
+  fprintf(FilePtr,"POINT_DATA %d\n",NumberOfListAtoms);
   fprintf(FilePtr,"SCALARS my_scalars float\n");
   fprintf(FilePtr,"LOOKUP_TABLE default\n");
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
+  for(i=0;i<NumberOfListAtoms;i++)
   {
-    for(i=0;i<NumberOfListAtoms[f1];i++)
-    {
-      Type=AtomTypes[i];
-      fprintf(FilePtr,"%g\n",GetVDWRadius(Type));    
-    }
+    Type=AtomTypes[i];
+    fprintf(FilePtr,"%g\n",GetVDWRadius(Type));    
   }
 
   // print the colors of the atoms
   fprintf(FilePtr,"VECTORS vectors float\n");
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
+  for(i=0;i<NumberOfListAtoms;i++)
   {
-    for(i=0;i<NumberOfListAtoms[f1];i++)
-    {
-      Type=AtomTypes[i];
+    Type=AtomTypes[i];
 
-      // transform color to a number between 0 and 1 (required by VTK)
-      fprintf(FilePtr,"%g 0 0\n",(REAL)GetColorIndex(Type)/(NUMBER_OF_COLORS-1.0));    
-    }
+    // transform color to a number between 0 and 1 (required by VTK)
+    fprintf(FilePtr,"%g 0 0\n",(REAL)GetColorIndex(Type)/(NUMBER_OF_COLORS-1.0));    
   }
   fclose(FilePtr);
-
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
-  {
-    for(i=0;i<MaxNumberOfListAtoms;i++)
-    {
-      Connectivity[f1][i]=0;
-      for(l=0;l<60;l++)
-        Neighbours[f1][i][l]=-1;
-    }
-  }
-
-  TotalNumberOfListAtoms=0;
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
-  {
-    NumberOfListAtoms[f1]=0;
-
-    // make bond list
-    for(i=0;i<Framework[system].NumberOfAtoms[f1];i++)
-    {
-      posA=Framework[system].Atoms[f1][i].Position;
-      Type=Framework[system].Atoms[f1][i].Type;
-
-      // example of a skipped atoms are virtual charge sites (Tip5p model)
-      if(PseudoAtoms[Type].PrintToPDB)
-      {
-        s=ConvertFromXYZtoABC(posA);
-
-        // make sure 's' is between 0 and 1.
-        if(s.x<0.0) s.x+=1.0;
-        if(s.y<0.0) s.y+=1.0;
-        if(s.z<0.0) s.z+=1.0;
-        if(s.x>=1.0) s.x-=1.0;
-        if(s.y>=1.0) s.y-=1.0;
-        if(s.z>=1.0) s.z-=1.0;
-
-        for(j=0;j<27;j++)
-        {
-          t.x=s.x+tr[j][0];
-          t.y=s.y+tr[j][1];
-          t.z=s.z+tr[j][2];
-
-          if((t.x>=VTKFractionalFrameworkBondsMin.x)&&(t.x<=VTKFractionalFrameworkBondsMax.x)&&
-             (t.y>=VTKFractionalFrameworkBondsMin.y)&&(t.y<=VTKFractionalFrameworkBondsMax.y)&&
-             (t.z>=VTKFractionalFrameworkBondsMin.z)&&(t.z<=VTKFractionalFrameworkBondsMax.z))
-          {
-            Positions[f1][NumberOfListAtoms[f1]]=ConvertFromABCtoXYZ(t);
-            AtomTypes[NumberOfListAtoms[f1]]=Type;
-            NumberOfListAtoms[f1]++;
-            TotalNumberOfListAtoms++;
-          }
-        }
-      }
-    }
-
-    // make bond list
-    for(i=0;i<NumberOfListAtoms[f1];i++)
-    {
-      posA=Positions[f1][i];
-      Connectivity[f1][i]=0;
-      for(j=0;j<NumberOfListAtoms[f1];j++)
-      {
-        posB=Positions[f1][j];
-
-        Bond_length=0.56+PseudoAtoms[AtomTypes[i]].Radius+PseudoAtoms[AtomTypes[j]].Radius;
-        dr.x=posA.x-posB.x;
-        dr.y=posA.y-posB.y;
-        dr.z=posA.z-posB.z;
-
-        // No boundary condition
-        r=sqrt(SQR(dr.x)+SQR(dr.y)+SQR(dr.z));
-        if((i!=j)&&(r<Bond_length))
-           Neighbours[f1][i][Connectivity[f1][i]++]=j;
-      }
-    }
-  }
-
-  // determine how much the framework has drifted
-  flexible_drift.x=flexible_drift.y=flexible_drift.z=0.0;
-  if(Framework[CurrentSystem].FrameworkModel==FLEXIBLE)
-  {
-    com=GetFrameworkCenterOfMass();
-    flexible_drift.x=com.x-Framework[CurrentSystem].IntialCenterOfMassPosition.x;
-    flexible_drift.y=com.y-Framework[CurrentSystem].IntialCenterOfMassPosition.y;
-    flexible_drift.z=com.z-Framework[CurrentSystem].IntialCenterOfMassPosition.z;
-  }
-
-
-  sprintf(buffer,"VTK/System_%d/FrameworkBonds%s.vtk",system,FileNameAppend);
-  FilePtr=fopen(buffer,"w");
-  fprintf(FilePtr,"# vtk DataFile Version 1.0\n");
-  fprintf(FilePtr,"Cube\n");
-  fprintf(FilePtr,"ASCII\n");
-  fprintf(FilePtr,"\n");
-  fprintf(FilePtr,"DATASET POLYDATA\n");
-  fprintf(FilePtr,"POINTS %d float\n",TotalNumberOfListAtoms);
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
-  {
-    for(i=0;i<NumberOfListAtoms[f1];i++)
-    {
-      pos.x=Positions[f1][i].x-flexible_drift.x;
-      pos.y=Positions[f1][i].y-flexible_drift.y;
-      pos.z=Positions[f1][i].z-flexible_drift.z;
-      fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
-    }
-  }
-
-  nr_bonds=0;
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
-  {
-    // write zeolite connection tubes
-    for(i=0;i<NumberOfListAtoms[f1];i++)
-      nr_bonds+=Connectivity[f1][i];
-  }
-  fprintf(FilePtr,"LINES %d %d\n",nr_bonds/2,(int)(nr_bonds*1.5));
-  index=0;
-  for(f1=0;f1<Framework[system].NumberOfFrameworks;f1++)
-  {
-    for(i=0;i<NumberOfListAtoms[f1];i++)
-    {
-      for(j=0;j<Connectivity[f1][i];j++)
-      {
-        if(i<Neighbours[f1][i][j]) // avoid double counting
-        {
-          fprintf(FilePtr,"%d %d %d\n",
-            2,
-            i+index,
-            Neighbours[f1][i][j]+index);
-        }
-      }
-    }
-    index=NumberOfListAtoms[f1];
-  }
-  fclose(FilePtr);
-
 
 
   // precompute the number of adsorbate atoms 
@@ -815,31 +700,7 @@ void WriteVTK(int system)
   // example of a skipped atoms are virtual charge sites (Tip5p model)
   nr_atoms=0;
   for(i=0;i<NumberOfAdsorbateMolecules[system];i++)
-  {
-    com=GetAdsorbateCenterOfMass(i);
-    com.x-=flexible_drift.x;
-    com.y-=flexible_drift.y;
-    com.z-=flexible_drift.z;
-    com_pdb=MapToBox(com);
-    dr.x=com.x-com_pdb.x;
-    dr.y=com.y-com_pdb.y;
-    dr.z=com.z-com_pdb.z;
-    for(k=0;k<27;k++)
-    {
-      s=ConvertFromXYZtoABC(com_pdb);
-
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalAdsorbateComMin.x)&&(t.x<=VTKFractionalAdsorbateComMax.x)&&
-         (t.y>=VTKFractionalAdsorbateComMin.y)&&(t.y<=VTKFractionalAdsorbateComMax.y)&&
-         (t.z>=VTKFractionalAdsorbateComMin.z)&&(t.z<=VTKFractionalAdsorbateComMax.z))
-      {
-        nr_atoms+=Components[Adsorbates[system][i].Type].NumberOfAtoms;
-      }
-    }
-  }
+    nr_atoms+=Components[Adsorbates[system][i].Type].NumberOfAtoms;
 
   sprintf(buffer,"VTK/System_%d/AdsorbateAtoms%s.vtk",system,FileNameAppend);
   FilePtr=fopen(buffer,"w");
@@ -849,7 +710,6 @@ void WriteVTK(int system)
   fprintf(FilePtr,"\n");
   fprintf(FilePtr,"DATASET POLYDATA\n");
   fprintf(FilePtr,"POINTS %d float\n",nr_atoms);
-  nr_bonds=0;
   for(i=0;i<NumberOfAdsorbateMolecules[system];i++)
   {
     com=GetAdsorbateCenterOfMass(i);
@@ -860,41 +720,28 @@ void WriteVTK(int system)
     dr.x=com.x-com_pdb.x;
     dr.y=com.y-com_pdb.y;
     dr.z=com.z-com_pdb.z;
-
-    for(k=0;k<27;k++)
+    for(j=0;j<Adsorbates[system][i].NumberOfAtoms;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
+      pos.x=Adsorbates[system][i].Atoms[j].Position.x-dr.x-flexible_drift.x;
+      pos.y=Adsorbates[system][i].Atoms[j].Position.y-dr.y-flexible_drift.y;
+      pos.z=Adsorbates[system][i].Atoms[j].Position.z-dr.z-flexible_drift.z;
+      fprintf(FilePtr,"%lf %lf %lf\n",
+          (double)((pos.x-shift.x)*(REAL)SIZE_X/max),
+          (double)((pos.y-shift.y)*(REAL)SIZE_Y/max),
+          (double)((pos.z-shift.z)*(REAL)SIZE_Z/max));
+    }
+  }
 
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalAdsorbateComMin.x)&&(t.x<=VTKFractionalAdsorbateComMax.x)&&
-         (t.y>=VTKFractionalAdsorbateComMin.y)&&(t.y<=VTKFractionalAdsorbateComMax.y)&&
-         (t.z>=VTKFractionalAdsorbateComMin.z)&&(t.z<=VTKFractionalAdsorbateComMax.z))
-      {
-        for(j=0;j<Adsorbates[system][i].NumberOfAtoms;j++)
-        {
-          pos.x=Adsorbates[system][i].Atoms[j].Position.x-dr.x-flexible_drift.x;
-          pos.y=Adsorbates[system][i].Atoms[j].Position.y-dr.y-flexible_drift.y;
-          pos.z=Adsorbates[system][i].Atoms[j].Position.z-dr.z-flexible_drift.z;
-
-          pos.x+=Box[CurrentSystem].ax*tr[k][0]+Box[CurrentSystem].bx*tr[k][1]+Box[CurrentSystem].cx*tr[k][2];
-          pos.y+=Box[CurrentSystem].ay*tr[k][0]+Box[CurrentSystem].by*tr[k][1]+Box[CurrentSystem].cy*tr[k][2];
-          pos.z+=Box[CurrentSystem].az*tr[k][0]+Box[CurrentSystem].bz*tr[k][1]+Box[CurrentSystem].cz*tr[k][2];
-
-          fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
-        }
-
-        Type=Adsorbates[system][i].Type;
-        for(j=0;j<Components[Type].NumberOfBonds;j++)
-        {
-          TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
-          TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
-          if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
-             nr_bonds++;
-        }
-      }
+  nr_bonds=0;
+  for(i=0;i<NumberOfAdsorbateMolecules[system];i++)
+  {
+    Type=Adsorbates[system][i].Type;
+    for(j=0;j<Components[Type].NumberOfBonds;j++)
+    {
+      TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
+      TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
+      if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
+        nr_bonds++;
     }
   }
 
@@ -903,42 +750,18 @@ void WriteVTK(int system)
   for(i=0;i<NumberOfAdsorbateMolecules[system];i++)
   {
     Type=Adsorbates[system][i].Type;
-
-    com=GetAdsorbateCenterOfMass(i);
-    com.x-=flexible_drift.x;
-    com.y-=flexible_drift.y;
-    com.z-=flexible_drift.z;
-    com_pdb=MapToBox(com);
-    dr.x=com.x-com_pdb.x;
-    dr.y=com.y-com_pdb.y;
-    dr.z=com.z-com_pdb.z;
-    for(k=0;k<27;k++)
+    for(j=0;j<Components[Type].NumberOfBonds;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
-
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalAdsorbateComMin.x)&&(t.x<=VTKFractionalAdsorbateComMax.x)&&
-         (t.y>=VTKFractionalAdsorbateComMin.y)&&(t.y<=VTKFractionalAdsorbateComMax.y)&&
-         (t.z>=VTKFractionalAdsorbateComMin.z)&&(t.z<=VTKFractionalAdsorbateComMax.z))
+      TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
+      TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
+      if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
       {
-        for(j=0;j<Components[Type].NumberOfBonds;j++)
-        {
-          TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
-          TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
-          if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
-          {
-            fprintf(FilePtr,"%d %d %d\n",2,
-               Components[Type].Bonds[j].A+count,
-               Components[Type].Bonds[j].B+count);
-          }
-        }
-        count+=Components[Adsorbates[system][i].Type].NumberOfAtoms;
-
+        fprintf(FilePtr,"%d %d %d\n",2,
+           Components[Type].Bonds[j].A+count,
+           Components[Type].Bonds[j].B+count);
       }
     }
+    count+=Components[Adsorbates[system][i].Type].NumberOfAtoms;
   }
 
   // print the scaling factors for the size of atoms
@@ -947,35 +770,13 @@ void WriteVTK(int system)
   fprintf(FilePtr,"LOOKUP_TABLE default\n");
   for(i=0;i<NumberOfAdsorbateMolecules[system];i++)
   {
-    com=GetAdsorbateCenterOfMass(i);
-    com.x-=flexible_drift.x;
-    com.y-=flexible_drift.y;
-    com.z-=flexible_drift.z;
-    com_pdb=MapToBox(com);
-    dr.x=com.x-com_pdb.x;
-    dr.y=com.y-com_pdb.y;
-    dr.z=com.z-com_pdb.z;
-    for(k=0;k<27;k++)
+    for(j=0;j<Adsorbates[system][i].NumberOfAtoms;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
-
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalAdsorbateComMin.x)&&(t.x<=VTKFractionalAdsorbateComMax.x)&&
-         (t.y>=VTKFractionalAdsorbateComMin.y)&&(t.y<=VTKFractionalAdsorbateComMax.y)&&
-         (t.z>=VTKFractionalAdsorbateComMin.z)&&(t.z<=VTKFractionalAdsorbateComMax.z))
-      {
-        for(j=0;j<Adsorbates[system][i].NumberOfAtoms;j++)
-        {
-          Type=Adsorbates[system][i].Atoms[j].Type;
-          if(PseudoAtoms[Type].PrintToPDB)
-            fprintf(FilePtr,"%g\n",GetVDWRadius(Type));
-          else
-            fprintf(FilePtr,"%g\n",0.0);
-        }
-      }
+      Type=Adsorbates[system][i].Atoms[j].Type;
+      if(PseudoAtoms[Type].PrintToPDB)
+        fprintf(FilePtr,"%g\n",GetVDWRadius(Type));
+      else
+        fprintf(FilePtr,"%g\n",0.0);
     }
   }
 
@@ -983,41 +784,26 @@ void WriteVTK(int system)
   fprintf(FilePtr,"VECTORS vectors float\n");
   for(i=0;i<NumberOfAdsorbateMolecules[system];i++)
   {
-    com=GetAdsorbateCenterOfMass(i);
-    com.x-=flexible_drift.x;
-    com.y-=flexible_drift.y;
-    com.z-=flexible_drift.z;
-    com_pdb=MapToBox(com);
-    dr.x=com.x-com_pdb.x;
-    dr.y=com.y-com_pdb.y;
-    dr.z=com.z-com_pdb.z;
-    for(k=0;k<27;k++)
+    for(j=0;j<Adsorbates[system][i].NumberOfAtoms;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
-
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalAdsorbateComMin.x)&&(t.x<=VTKFractionalAdsorbateComMax.x)&&
-         (t.y>=VTKFractionalAdsorbateComMin.y)&&(t.y<=VTKFractionalAdsorbateComMax.y)&&
-         (t.z>=VTKFractionalAdsorbateComMin.z)&&(t.z<=VTKFractionalAdsorbateComMax.z))
-      {
-        for(j=0;j<Adsorbates[system][i].NumberOfAtoms;j++)
-        {
-          Type=Adsorbates[system][i].Atoms[j].Type;
-          if(PseudoAtoms[Type].PrintToPDB)
-            fprintf(FilePtr,"%g 0 0\n",(REAL)GetColorIndex(Type)/(NUMBER_OF_COLORS-1.0));
-          else 
-            fprintf(FilePtr,"0 0 0\n");
-        }
-      }
+      Type=Adsorbates[system][i].Atoms[j].Type;
+      if(PseudoAtoms[Type].PrintToPDB)
+        fprintf(FilePtr,"%g 0 0\n",(REAL)GetColorIndex(Type)/(NUMBER_OF_COLORS-1.0));
+      else 
+        fprintf(FilePtr,"0 0 0\n");
     }
   }
   fclose(FilePtr);
 
 
-  sprintf(buffer,"VTK/System_%d/CationsAtoms%s.vtk",system,FileNameAppend);
+  // precompute the number of cations atoms 
+  // this is needed at the top of the VTK-file
+  // example of a skipped atoms are virtual charge sites (Tip5p model)
+  nr_atoms=0;
+  for(i=0;i<NumberOfCationMolecules[system];i++)
+    nr_atoms+=Components[Cations[system][i].Type].NumberOfAtoms;
+
+  sprintf(buffer,"VTK/System_%d/CationAtoms%s.vtk",system,FileNameAppend);
   FilePtr=fopen(buffer,"w");
   fprintf(FilePtr,"# vtk DataFile Version 1.0\n");
   fprintf(FilePtr,"Cube\n");
@@ -1025,7 +811,6 @@ void WriteVTK(int system)
   fprintf(FilePtr,"\n");
   fprintf(FilePtr,"DATASET POLYDATA\n");
   fprintf(FilePtr,"POINTS %d float\n",nr_atoms);
-  nr_bonds=0;
   for(i=0;i<NumberOfCationMolecules[system];i++)
   {
     com=GetCationCenterOfMass(i);
@@ -1036,41 +821,28 @@ void WriteVTK(int system)
     dr.x=com.x-com_pdb.x;
     dr.y=com.y-com_pdb.y;
     dr.z=com.z-com_pdb.z;
-
-    for(k=0;k<27;k++)
+    for(j=0;j<Cations[system][i].NumberOfAtoms;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
+      pos.x=Cations[system][i].Atoms[j].Position.x-dr.x-flexible_drift.x;
+      pos.y=Cations[system][i].Atoms[j].Position.y-dr.y-flexible_drift.y;
+      pos.z=Cations[system][i].Atoms[j].Position.z-dr.z-flexible_drift.z;
+      fprintf(FilePtr,"%lf %lf %lf\n",
+          (double)((pos.x-shift.x)*(REAL)SIZE_X/max),
+          (double)((pos.y-shift.y)*(REAL)SIZE_Y/max),
+          (double)((pos.z-shift.z)*(REAL)SIZE_Z/max));
+    }
+  }
 
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalCationComMin.x)&&(t.x<=VTKFractionalCationComMax.x)&&
-         (t.y>=VTKFractionalCationComMin.y)&&(t.y<=VTKFractionalCationComMax.y)&&
-         (t.z>=VTKFractionalCationComMin.z)&&(t.z<=VTKFractionalCationComMax.z))
-      {
-        for(j=0;j<Cations[system][i].NumberOfAtoms;j++)
-        {
-          pos.x=Cations[system][i].Atoms[j].Position.x-dr.x-flexible_drift.x;
-          pos.y=Cations[system][i].Atoms[j].Position.y-dr.y-flexible_drift.y;
-          pos.z=Cations[system][i].Atoms[j].Position.z-dr.z-flexible_drift.z;
-
-          pos.x+=Box[CurrentSystem].ax*tr[k][0]+Box[CurrentSystem].bx*tr[k][1]+Box[CurrentSystem].cx*tr[k][2];
-          pos.y+=Box[CurrentSystem].ay*tr[k][0]+Box[CurrentSystem].by*tr[k][1]+Box[CurrentSystem].cy*tr[k][2];
-          pos.z+=Box[CurrentSystem].az*tr[k][0]+Box[CurrentSystem].bz*tr[k][1]+Box[CurrentSystem].cz*tr[k][2];
-
-          fprintf(FilePtr,"%lf %lf %lf\n",(double)pos.x,(double)pos.y,(double)pos.z);
-        }
-
-        Type=Cations[system][i].Type;
-        for(j=0;j<Components[Type].NumberOfBonds;j++)
-        {
-          TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
-          TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
-          if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
-             nr_bonds++;
-        }
-      }
+  nr_bonds=0;
+  for(i=0;i<NumberOfCationMolecules[system];i++)
+  {
+    Type=Cations[system][i].Type;
+    for(j=0;j<Components[Type].NumberOfBonds;j++)
+    {
+      TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
+      TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
+      if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
+        nr_bonds++;
     }
   }
 
@@ -1079,42 +851,18 @@ void WriteVTK(int system)
   for(i=0;i<NumberOfCationMolecules[system];i++)
   {
     Type=Cations[system][i].Type;
-
-    com=GetCationCenterOfMass(i);
-    com.x-=flexible_drift.x;
-    com.y-=flexible_drift.y;
-    com.z-=flexible_drift.z;
-    com_pdb=MapToBox(com);
-    dr.x=com.x-com_pdb.x;
-    dr.y=com.y-com_pdb.y;
-    dr.z=com.z-com_pdb.z;
-    for(k=0;k<27;k++)
+    for(j=0;j<Components[Type].NumberOfBonds;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
-
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalCationComMin.x)&&(t.x<=VTKFractionalCationComMax.x)&&
-         (t.y>=VTKFractionalCationComMin.y)&&(t.y<=VTKFractionalCationComMax.y)&&
-         (t.z>=VTKFractionalCationComMin.z)&&(t.z<=VTKFractionalCationComMax.z))
+      TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
+      TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
+      if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
       {
-        for(j=0;j<Components[Type].NumberOfBonds;j++)
-        {
-          TypeA=Components[Type].Type[Components[Type].Bonds[j].A];
-          TypeB=Components[Type].Type[Components[Type].Bonds[j].B];
-          if((PseudoAtoms[TypeA].PrintToPDB)&&(PseudoAtoms[TypeB].PrintToPDB))
-          {
-            fprintf(FilePtr,"%d %d %d\n",2,
-               Components[Type].Bonds[j].A+count,
-               Components[Type].Bonds[j].B+count);
-          }
-        }
-        count+=Components[Cations[system][i].Type].NumberOfAtoms;
-
+        fprintf(FilePtr,"%d %d %d\n",2,
+           Components[Type].Bonds[j].A+count,
+           Components[Type].Bonds[j].B+count);
       }
     }
+    count+=Components[Cations[system][i].Type].NumberOfAtoms;
   }
 
   // print the scaling factors for the size of atoms
@@ -1123,35 +871,13 @@ void WriteVTK(int system)
   fprintf(FilePtr,"LOOKUP_TABLE default\n");
   for(i=0;i<NumberOfCationMolecules[system];i++)
   {
-    com=GetCationCenterOfMass(i);
-    com.x-=flexible_drift.x;
-    com.y-=flexible_drift.y;
-    com.z-=flexible_drift.z;
-    com_pdb=MapToBox(com);
-    dr.x=com.x-com_pdb.x;
-    dr.y=com.y-com_pdb.y;
-    dr.z=com.z-com_pdb.z;
-    for(k=0;k<27;k++)
+    for(j=0;j<Cations[system][i].NumberOfAtoms;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
-
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalCationComMin.x)&&(t.x<=VTKFractionalCationComMax.x)&&
-         (t.y>=VTKFractionalCationComMin.y)&&(t.y<=VTKFractionalCationComMax.y)&&
-         (t.z>=VTKFractionalCationComMin.z)&&(t.z<=VTKFractionalCationComMax.z))
-      {
-        for(j=0;j<Cations[system][i].NumberOfAtoms;j++)
-        {
-          Type=Cations[system][i].Atoms[j].Type;
-          if(PseudoAtoms[Type].PrintToPDB)
-            fprintf(FilePtr,"%g\n",GetVDWRadius(Type));
-          else
-            fprintf(FilePtr,"%g\n",0.0);
-        }
-      }
+      Type=Cations[system][i].Atoms[j].Type;
+      if(PseudoAtoms[Type].PrintToPDB)
+        fprintf(FilePtr,"%g\n",GetVDWRadius(Type));
+      else
+        fprintf(FilePtr,"%g\n",0.0);
     }
   }
 
@@ -1159,38 +885,17 @@ void WriteVTK(int system)
   fprintf(FilePtr,"VECTORS vectors float\n");
   for(i=0;i<NumberOfCationMolecules[system];i++)
   {
-    com=GetCationCenterOfMass(i);
-    com.x-=flexible_drift.x;
-    com.y-=flexible_drift.y;
-    com.z-=flexible_drift.z;
-    com_pdb=MapToBox(com);
-    dr.x=com.x-com_pdb.x;
-    dr.y=com.y-com_pdb.y;
-    dr.z=com.z-com_pdb.z;
-    for(k=0;k<27;k++)
+    for(j=0;j<Cations[system][i].NumberOfAtoms;j++)
     {
-      s=ConvertFromXYZtoABC(com_pdb);
-
-      t.x=s.x+tr[k][0];
-      t.y=s.y+tr[k][1];
-      t.z=s.z+tr[k][2];
-
-      if((t.x>=VTKFractionalCationComMin.x)&&(t.x<=VTKFractionalCationComMax.x)&&
-         (t.y>=VTKFractionalCationComMin.y)&&(t.y<=VTKFractionalCationComMax.y)&&
-         (t.z>=VTKFractionalCationComMin.z)&&(t.z<=VTKFractionalCationComMax.z))
-      {
-        for(j=0;j<Cations[system][i].NumberOfAtoms;j++)
-        {
-          Type=Cations[system][i].Atoms[j].Type;
-          if(PseudoAtoms[Type].PrintToPDB)
-            fprintf(FilePtr,"%g 0 0\n",(REAL)GetColorIndex(Type)/(NUMBER_OF_COLORS-1.0));
-          else 
-            fprintf(FilePtr,"0 0 0\n");
-        }
-      }
+      Type=Cations[system][i].Atoms[j].Type;
+      if(PseudoAtoms[Type].PrintToPDB)
+        fprintf(FilePtr,"%g 0 0\n",(REAL)GetColorIndex(Type)/(NUMBER_OF_COLORS-1.0));
+      else
+        fprintf(FilePtr,"0 0 0\n");
     }
   }
   fclose(FilePtr);
+
 
 
 
@@ -1567,9 +1272,9 @@ int SamplePDBMovies(int Choice,int Subdir)
         {
           if(PseudoAtoms[Adsorbates[CurrentSystem][j].Atoms[k].Type].PrintToPDB)
           {
-            r.x=MovieScale*(Adsorbates[CurrentSystem][j].Atoms[k].Position.x-dr.x);
-            r.y=MovieScale*(Adsorbates[CurrentSystem][j].Atoms[k].Position.y-dr.y);
-            r.z=MovieScale*(Adsorbates[CurrentSystem][j].Atoms[k].Position.z-dr.z);
+            r.x=MovieScale*(Adsorbates[CurrentSystem][j].Atoms[k].Position.x-dr.x-flexible_drift.x);
+            r.y=MovieScale*(Adsorbates[CurrentSystem][j].Atoms[k].Position.y-dr.y-flexible_drift.y);
+            r.z=MovieScale*(Adsorbates[CurrentSystem][j].Atoms[k].Position.z-dr.z-flexible_drift.z);
 
             sprintf(AtomName,"%2s",PseudoAtoms[Adsorbates[CurrentSystem][j].Atoms[k].Type].PrintToPDBName);
             sprintf(Element,"%2s",PseudoAtoms[Adsorbates[CurrentSystem][j].Atoms[k].Type].PrintToPDBName);
@@ -1602,9 +1307,9 @@ int SamplePDBMovies(int Choice,int Subdir)
         {
           if(PseudoAtoms[Cations[CurrentSystem][j].Atoms[k].Type].PrintToPDB)
           {
-            r.x=MovieScale*(Cations[CurrentSystem][j].Atoms[k].Position.x-dr.x);
-            r.y=MovieScale*(Cations[CurrentSystem][j].Atoms[k].Position.y-dr.y);
-            r.z=MovieScale*(Cations[CurrentSystem][j].Atoms[k].Position.z-dr.z);
+            r.x=MovieScale*(Cations[CurrentSystem][j].Atoms[k].Position.x-dr.x-flexible_drift.x);
+            r.y=MovieScale*(Cations[CurrentSystem][j].Atoms[k].Position.y-dr.y-flexible_drift.y);
+            r.z=MovieScale*(Cations[CurrentSystem][j].Atoms[k].Position.z-dr.z-flexible_drift.z);
 
             sprintf(AtomName,"%2s",PseudoAtoms[Cations[CurrentSystem][j].Atoms[k].Type].PrintToPDBName);
             sprintf(Element,"%2s",PseudoAtoms[Cations[CurrentSystem][j].Atoms[k].Type].PrintToPDBName);
@@ -1844,8 +1549,6 @@ void FreeEnergyProfile3D(void)
   VECTOR pos,shift,Size;
   char buffer[256];
   FILE *FilePtr;
-  REAL_MATRIX3x3 Cell;
-  REAL_MATRIX3x3 InverseCell;
 
   Histogram_3D=(REAL*)calloc(SIZE_X*SIZE_Y*SIZE_Z,sizeof(REAL));
   Histogram_Count_3D=(REAL*)calloc(SIZE_X*SIZE_Y*SIZE_Z,sizeof(REAL));
@@ -1855,27 +1558,14 @@ void FreeEnergyProfile3D(void)
   typeA=Components[0].Type[0];
   ChargeMethod=NONE;
 
-  switch(FreeEnergyAveragingTypeVTK)
-  {
-    case VTK_UNIT_CELL:
-      Cell=UnitCellBox[CurrentSystem];
-      InverseCell=InverseUnitCellBox[CurrentSystem];
-      break;
-    case VTK_FULL_BOX:
-    default:
-      Cell=Box[CurrentSystem];
-      InverseCell=InverseBox[CurrentSystem];
-      break;
-  }
-
   Size.x=Size.y=Size.z=0.0;
   shift.x=shift.y=shift.z=0.0;
   C.x=1.0;
   C.y=0.0;
   C.z=0.0;
-  pos.x=Cell.ax*C.x+Cell.bx*C.y+Cell.cx*C.z;
-  pos.y=Cell.ay*C.x+Cell.by*C.y+Cell.cy*C.z;
-  pos.z=Cell.az*C.x+Cell.bz*C.y+Cell.cz*C.z;
+  pos.x=UnitCellBox[0].ax*C.x+UnitCellBox[0].bx*C.y+UnitCellBox[0].cx*C.z;
+  pos.y=UnitCellBox[0].ay*C.x+UnitCellBox[0].by*C.y+UnitCellBox[0].cy*C.z;
+  pos.z=UnitCellBox[0].az*C.x+UnitCellBox[0].bz*C.y+UnitCellBox[0].cz*C.z;
   Size.x+=fabs(pos.x);
   Size.y+=fabs(pos.y);
   Size.z+=fabs(pos.z);
@@ -1886,9 +1576,9 @@ void FreeEnergyProfile3D(void)
   C.x=0.0;
   C.y=1.0;
   C.z=0.0;
-  pos.x=Cell.ax*C.x+Cell.bx*C.y+Cell.cx*C.z;
-  pos.y=Cell.ay*C.x+Cell.by*C.y+Cell.cy*C.z;
-  pos.z=Cell.az*C.x+Cell.bz*C.y+Cell.cz*C.z;
+  pos.x=UnitCellBox[0].ax*C.x+UnitCellBox[0].bx*C.y+UnitCellBox[0].cx*C.z;
+  pos.y=UnitCellBox[0].ay*C.x+UnitCellBox[0].by*C.y+UnitCellBox[0].cy*C.z;
+  pos.z=UnitCellBox[0].az*C.x+UnitCellBox[0].bz*C.y+UnitCellBox[0].cz*C.z;
   Size.x+=fabs(pos.x);
   Size.y+=fabs(pos.y);
   Size.z+=fabs(pos.z);
@@ -1899,17 +1589,15 @@ void FreeEnergyProfile3D(void)
   C.x=0.0;
   C.y=0.0;
   C.z=1.0;
-  pos.x=Cell.ax*C.x+Cell.bx*C.y+Cell.cx*C.z;
-  pos.y=Cell.ay*C.x+Cell.by*C.y+Cell.cy*C.z;
-  pos.z=Cell.az*C.x+Cell.bz*C.y+Cell.cz*C.z;
+  pos.x=UnitCellBox[0].ax*C.x+UnitCellBox[0].bx*C.y+UnitCellBox[0].cx*C.z;
+  pos.y=UnitCellBox[0].ay*C.x+UnitCellBox[0].by*C.y+UnitCellBox[0].cy*C.z;
+  pos.z=UnitCellBox[0].az*C.x+UnitCellBox[0].bz*C.y+UnitCellBox[0].cz*C.z;
   Size.x+=fabs(pos.x);
   Size.y+=fabs(pos.y);
   Size.z+=fabs(pos.z);
   if(pos.x<0.0) shift.x+=pos.x;
   if(pos.y<0.0) shift.y+=pos.y;
   if(pos.z<0.0) shift.z+=pos.z;
-
-  max=MAX2(Size.x,MAX2(Size.y,Size.z));
 
   printf("Shift: %lf %lf %lf\n",(double)shift.x,(double)shift.y,(double)shift.z);
   printf("Size: %lf %lf %lf\n",(double)Size.x,(double)Size.y,(double)Size.z);
@@ -1919,10 +1607,27 @@ void FreeEnergyProfile3D(void)
   {
     if(i%PrintEvery==0) printf("iteration: %d\n",i);
 
-    // generate random number in enclosed box
-    pos.x=RandomNumber()*Size.x;
-    pos.y=RandomNumber()*Size.y;
-    pos.z=RandomNumber()*Size.z;
+    switch(BoundaryCondition[CurrentSystem])
+    {
+      case RECTANGULAR:
+        pos.x=RandomNumber()*UnitCellSize[0].x;
+        pos.y=RandomNumber()*UnitCellSize[0].y;
+        pos.z=RandomNumber()*UnitCellSize[0].z;
+        break;
+      case TRICLINIC:
+        C.x=RandomNumber();
+        C.y=RandomNumber();
+        C.z=RandomNumber();
+        pos.x=UnitCellBox[0].ax*C.x+UnitCellBox[0].bx*C.y+UnitCellBox[0].cx*C.z;
+        pos.y=UnitCellBox[0].ay*C.x+UnitCellBox[0].by*C.y+UnitCellBox[0].cy*C.z;
+        pos.z=UnitCellBox[0].az*C.x+UnitCellBox[0].bz*C.y+UnitCellBox[0].cz*C.z;
+
+        pos.x=RandomNumber()*Size.x;
+        pos.y=RandomNumber()*Size.y;
+        pos.z=RandomNumber()*Size.z;
+
+      break;
+    }
 
     NumberOfBeadsAlreadyPlaced=0;
     NumberOfTrialPositionsForTheFirstBead=1;
@@ -1939,16 +1644,43 @@ void FreeEnergyProfile3D(void)
     else
        value=0.0;
 
-    x=pos.x*(REAL)SIZE_X/Size.x;
-    y=pos.y*(REAL)SIZE_Y/Size.y;
-    z=pos.z*(REAL)SIZE_Z/Size.z;
-    index=x+y*SIZE_Y+z*SIZE_X*SIZE_Y;
-    if((index>0)&&(index<SIZE_X*SIZE_Y*SIZE_Z))
-    {
-      Histogram_3D[index]+=value;
-      Histogram_Count_3D[index]+=1.0;
-    }
+/*
+    pos.x-=shift.x;
+    pos.y-=shift.y;
+    pos.z-=shift.z;
+*/
 
+/*
+    x=(pos.x*(REAL)SIZE_X/Size.x);
+    y=(pos.y*(REAL)SIZE_Y/Size.y);
+    z=(pos.z*(REAL)SIZE_Z/Size.z);
+    index=x+y*SIZE_Y+z*SIZE_X*SIZE_Y;
+    Histogram_3D[index]+=value;
+    Histogram_Count_3D[index]+=1.0;
+*/
+    //for(j=0;j<NumberOfUnitCells[0].x;j++)
+    //  for(k=0;k<NumberOfUnitCells[0].y;k++)
+    //    for(l=0;l<NumberOfUnitCells[0].z;l++)
+    for(j=0;j<1;j++)
+      for(k=0;k<1;k++)
+        for(l=0;l<1;l++)
+        {
+          //x=(int)(j*(pos.x*(REAL)SIZE_X/(Size.x*NumberOfUnitCells[0].x)));
+          //y=(int)(k*(pos.y*(REAL)SIZE_Y/(Size.y*NumberOfUnitCells[0].y)));
+          //z=(int)(l*(pos.z*(REAL)SIZE_Z/(Size.z*NumberOfUnitCells[0].z)));
+          //x=(j*SIZE_X/NumberOfUnitCells[0].x)+(pos.x*(REAL)SIZE_X/(Size.x*NumberOfUnitCells[0].x));
+          //y=(k*SIZE_Y/NumberOfUnitCells[0].y)+(pos.y*(REAL)SIZE_Y/(Size.y*NumberOfUnitCells[0].y));
+          //z=(l*SIZE_Z/NumberOfUnitCells[0].z)+(pos.z*(REAL)SIZE_Z/(Size.z*NumberOfUnitCells[0].z));
+          x=(j*SIZE_X/NumberOfUnitCells[0].x)+(pos.x*(REAL)SIZE_X/(Size.x));
+          y=(k*SIZE_Y/NumberOfUnitCells[0].y)+(pos.y*(REAL)SIZE_Y/(Size.y));
+          z=(l*SIZE_Z/NumberOfUnitCells[0].z)+(pos.z*(REAL)SIZE_Z/(Size.z));
+          index=x+y*SIZE_Y+z*SIZE_X*SIZE_Y;
+          if((index>0)&&(index<SIZE_X*SIZE_Y*SIZE_Z))
+          {
+            Histogram_3D[index]+=value;
+            Histogram_Count_3D[index]+=1.0;
+          }
+        }
     if(i%PrintEvery==0)
     {
       mkdir("VTK",S_IRWXU);

@@ -75,8 +75,8 @@ REAL *NetChargeAdsorbates;
 REAL *ReciprocalCutOffSquared;
 
 // the net-charge difference for MC-moves
-REAL NetChargeAdsorbateDelta;
 REAL NetChargeCationDelta;
+REAL NetChargeAdsorbateDelta;
 
 // the energy difference for MC-moves
 REAL *UHostHostChargeChargeFourierDelta;
@@ -1720,8 +1720,6 @@ int PrecomputeTotalEwaldContributions(void)
     }
   }
 
-  NetChargeSystem[CurrentSystem]=NetChargeFramework[CurrentSystem]+NetChargeAdsorbates[CurrentSystem]+NetChargeCations[CurrentSystem];
-
   return 0;
 }
 
@@ -2719,31 +2717,31 @@ int EwaldFourierEnergy(void)
   // Note: total energy is Fourier minus self minus exclusion energy
   // Note: the net-charge is taken into account
 
-  // Host-host energy (corrected for net-charge)
+  // Host-host energy
   if(Framework[CurrentSystem].FrameworkModel==FLEXIBLE)
   {
     UHostHostChargeChargeFourier[CurrentSystem]=energy_framework_framework-energy_framework_self-energy_framework_excluded;
     UHostHostChargeBondDipoleFourier[CurrentSystem]=energy_framework_framework_c_bd-energy_framework_excluded_c_bd;
     UHostHostBondDipoleBondDipoleFourier[CurrentSystem]=energy_framework_framework_bd-energy_framework_self_bd-energy_framework_excluded_bd;
+    UHostHostChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeFramework[CurrentSystem]);
     UHostHostChargeChargeFourier[CurrentSystem]-=UChargeChargeFrameworkRigid[CurrentSystem];
     UHostHostChargeBondDipoleFourier[CurrentSystem]-=UChargeBondDipoleFrameworkRigid[CurrentSystem];
     UHostHostBondDipoleBondDipoleFourier[CurrentSystem]-=UBondDipoleBondDipoleFrameworkRigid[CurrentSystem];
-    UHostHostChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeFramework[CurrentSystem]);
   }
 
-  // Host-adsorbate energy (corrected for net-charge)
+  // Host-adsorbate energy
   UHostAdsorbateChargeChargeFourier[CurrentSystem]=2.0*energy_framework_adsorbate;
   UHostAdsorbateChargeBondDipoleFourier[CurrentSystem]=2.0*energy_framework_adsorbate_c_bd;
   UHostAdsorbateBondDipoleBondDipoleFourier[CurrentSystem]=2.0*energy_framework_adsorbate_bd;
   UHostAdsorbateChargeChargeFourier[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*NetChargeAdsorbates[CurrentSystem];
 
-  // Host-cation energy (corrected for net-charge)
+  // Host-cation energy
   UHostCationChargeChargeFourier[CurrentSystem]=2.0*energy_framework_cation;
   UHostCationChargeBondDipoleFourier[CurrentSystem]=2.0*energy_framework_cation_c_bd;
   UHostCationBondDipoleBondDipoleFourier[CurrentSystem]=2.0*energy_framework_cation_bd;
   UHostCationChargeChargeFourier[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*NetChargeCations[CurrentSystem];
 
-  // Adsorbate-adsorbate energy (corrected for net-charge)
+  // Adsorbate-adsorbate energy
   if(!OmitAdsorbateAdsorbateCoulombInteractions)
   {
     UAdsorbateAdsorbateChargeChargeFourier[CurrentSystem]=energy_adsorbate_adsorbate-energy_adsorbate_self-energy_adsorbate_excluded;
@@ -2752,7 +2750,7 @@ int EwaldFourierEnergy(void)
     UAdsorbateAdsorbateChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeAdsorbates[CurrentSystem]);
   }
 
-  // Cation-cation energy (corrected for net-charge)
+  // Cation-cation energy
   if(!OmitCationCationCoulombInteractions)
   {
     UCationCationChargeChargeFourier[CurrentSystem]=energy_cation_cation-energy_cation_self-energy_cation_excluded;
@@ -2761,7 +2759,7 @@ int EwaldFourierEnergy(void)
     UCationCationChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeCations[CurrentSystem]);
   }
 
-  // Adsorbate-cation energy (corrected for net-charge)
+  // Adsorbate-cation energy
   if(!OmitAdsorbateCationCoulombInteractions)
   {
     UAdsorbateCationChargeChargeFourier[CurrentSystem]=2.0*energy_adsorbate_cation;
@@ -4654,10 +4652,10 @@ int EwaldFourierForce(void)
     UHostHostChargeChargeFourier[CurrentSystem]=energy_framework_framework-energy_framework_self-energy_framework_excluded;
     UHostHostChargeBondDipoleFourier[CurrentSystem]=energy_framework_framework_c_bd-energy_framework_excluded_c_bd;
     UHostHostBondDipoleBondDipoleFourier[CurrentSystem]=energy_framework_framework_bd-energy_framework_self_bd-energy_framework_excluded_bd;
+    UHostHostChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeFramework[CurrentSystem]);
     UHostHostChargeChargeFourier[CurrentSystem]-=UChargeChargeFrameworkRigid[CurrentSystem];
     UHostHostChargeBondDipoleFourier[CurrentSystem]-=UChargeBondDipoleFrameworkRigid[CurrentSystem];
     UHostHostBondDipoleBondDipoleFourier[CurrentSystem]-=UBondDipoleBondDipoleFrameworkRigid[CurrentSystem];
-    UHostHostChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeFramework[CurrentSystem]);
   }
 
 
@@ -6742,26 +6740,26 @@ COULOMBIC_CONVERSION_FACTOR*(4.0*M_PI/volume)*exp((-0.25/SQR(alpha))*rksqr)/rksq
     UHostHostChargeChargeFourier[CurrentSystem]=energy_framework_framework-energy_framework_self-energy_framework_excluded;
     UHostHostChargeBondDipoleFourier[CurrentSystem]=energy_framework_framework_c_bd-energy_framework_excluded_c_bd;
     UHostHostBondDipoleBondDipoleFourier[CurrentSystem]=energy_framework_framework_bd-energy_framework_self_bd-energy_framework_excluded_bd;
+    UHostHostChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeFramework[CurrentSystem]);
     UHostHostChargeChargeFourier[CurrentSystem]-=UChargeChargeFrameworkRigid[CurrentSystem];
     UHostHostChargeBondDipoleFourier[CurrentSystem]-=UChargeBondDipoleFrameworkRigid[CurrentSystem];
     UHostHostBondDipoleBondDipoleFourier[CurrentSystem]-=UBondDipoleBondDipoleFrameworkRigid[CurrentSystem];
-    UHostHostChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeFramework[CurrentSystem]);
   }
 
 
-  // Host-adsorbate energy (corrected for net-charge)
+  // Host-adsorbate energy
   UHostAdsorbateChargeChargeFourier[CurrentSystem]=2.0*energy_framework_adsorbate;
   UHostAdsorbateChargeBondDipoleFourier[CurrentSystem]=2.0*energy_framework_adsorbate_c_bd;
   UHostAdsorbateBondDipoleBondDipoleFourier[CurrentSystem]=2.0*energy_framework_adsorbate_bd;
   UHostAdsorbateChargeChargeFourier[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*NetChargeAdsorbates[CurrentSystem];
 
-  // Host-cation energy (corrected for net-charge)
+  // Host-cation energy
   UHostCationChargeChargeFourier[CurrentSystem]=2.0*energy_framework_cation;
   UHostCationChargeBondDipoleFourier[CurrentSystem]=2.0*energy_framework_cation_c_bd;
   UHostCationBondDipoleBondDipoleFourier[CurrentSystem]=2.0*energy_framework_cation_bd;
   UHostCationChargeChargeFourier[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*NetChargeCations[CurrentSystem];
 
-  // Adsorbate-adsorbate energy (corrected for net-charge)
+  // Adsorbate-adsorbate energy
   if(!OmitAdsorbateAdsorbateCoulombInteractions)
   {
     UAdsorbateAdsorbateChargeChargeFourier[CurrentSystem]=energy_adsorbate_adsorbate-energy_adsorbate_self-energy_adsorbate_excluded;
@@ -6770,7 +6768,7 @@ COULOMBIC_CONVERSION_FACTOR*(4.0*M_PI/volume)*exp((-0.25/SQR(alpha))*rksqr)/rksq
     UAdsorbateAdsorbateChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeAdsorbates[CurrentSystem]);
   }
 
-  // Cation-cation energy (corrected for net-charge)
+  // Cation-cation energy
   if(!OmitCationCationCoulombInteractions)
   {
     UCationCationChargeChargeFourier[CurrentSystem]=energy_cation_cation-energy_cation_self-energy_cation_excluded;
@@ -6779,7 +6777,7 @@ COULOMBIC_CONVERSION_FACTOR*(4.0*M_PI/volume)*exp((-0.25/SQR(alpha))*rksqr)/rksq
     UCationCationChargeChargeFourier[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeCations[CurrentSystem]);
   }
 
-  // Adsorbate-cation energy (corrected for net-charge)
+  // Adsorbate-cation energy
   if(!OmitInterMolecularInteractions&&!OmitAdsorbateCationCoulombInteractions)
   {
     UAdsorbateCationChargeChargeFourier[CurrentSystem]=2.0*energy_adsorbate_cation;
@@ -7480,9 +7478,6 @@ int CalculateEwaldFourierAdsorbate(int NewMolecule,int OldMolecule,int mol,int s
     }
   }
 
-  // set net-charge difference
-  NetChargeAdsorbateDelta=net_charge_new-net_charge_old;
-
   // set energy differences
   if(!OmitAdsorbateAdsorbateCoulombInteractions)
   {
@@ -7490,8 +7485,6 @@ int CalculateEwaldFourierAdsorbate(int NewMolecule,int OldMolecule,int mol,int s
     UAdsorbateAdsorbateChargeBondDipoleFourierDelta[CurrentSystem]=energy_charge_bonddipole_adsorbates-(energy_excluded_c_bd_new-energy_excluded_c_bd_old);
     UAdsorbateAdsorbateBondDipoleBondDipoleFourierDelta[CurrentSystem]=energy_bonddipole_adsorbates-(energy_self_bd_new-energy_self_bd_old)-
                                      (energy_excluded_bd_new-energy_excluded_bd_old);
-    UAdsorbateAdsorbateChargeChargeFourierDelta[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeAdsorbates[CurrentSystem]+NetChargeAdsorbateDelta)-
-                                                                UIon[CurrentSystem]*SQR(NetChargeAdsorbates[CurrentSystem]);
   }
 
   if(!OmitInterMolecularInteractions)
@@ -7499,16 +7492,15 @@ int CalculateEwaldFourierAdsorbate(int NewMolecule,int OldMolecule,int mol,int s
     UAdsorbateCationChargeChargeFourierDelta[CurrentSystem]=2.0*energy_charge_adsorbates_cations;
     UAdsorbateCationChargeBondDipoleFourierDelta[CurrentSystem]=2.0*energy_charge_bonddipole_adsorbates_cations;
     UAdsorbateCationBondDipoleBondDipoleFourierDelta[CurrentSystem]=2.0*energy_bonddipole_adsorbates_cations;
-    UAdsorbateCationChargeChargeFourierDelta[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeCations[CurrentSystem]*(NetChargeAdsorbates[CurrentSystem]+NetChargeAdsorbateDelta)-
-                                                             2.0*UIon[CurrentSystem]*NetChargeCations[CurrentSystem]*(NetChargeAdsorbates[CurrentSystem]);
   }
 
   UHostAdsorbateChargeChargeFourierDelta[CurrentSystem]=2.0*energy_charge_framework_adsorbates;
   UHostAdsorbateChargeBondDipoleFourierDelta[CurrentSystem]=2.0*energy_charge_bonddipole_framework_adsorbates;
   UHostAdsorbateBondDipoleBondDipoleFourierDelta[CurrentSystem]=2.0*energy_bonddipole_framework_adsorbates;
-  UHostAdsorbateChargeChargeFourierDelta[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*(NetChargeAdsorbates[CurrentSystem]+NetChargeAdsorbateDelta)-
-                                                         2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*(NetChargeAdsorbates[CurrentSystem]);
 
+  // set net-charge difference
+  NetChargeAdsorbateDelta=net_charge_new-net_charge_old;
+  NetChargeAdsorbateDelta=0.0;
   return 0;
 }
 
@@ -8181,9 +8173,6 @@ int CalculateEwaldFourierCation(int NewMolecule,int OldMolecule,int mol,int stor
     }
   }
 
-  // set net-charge difference
-  NetChargeCationDelta=net_charge_new-net_charge_old;
-
   // set energy differences
   if(!OmitCationCationCoulombInteractions)
   {
@@ -8191,8 +8180,6 @@ int CalculateEwaldFourierCation(int NewMolecule,int OldMolecule,int mol,int stor
     UCationCationChargeBondDipoleFourierDelta[CurrentSystem]=energy_charge_bonddipole_cations-(energy_excluded_c_bd_new-energy_excluded_c_bd_old);
     UCationCationBondDipoleBondDipoleFourierDelta[CurrentSystem]=energy_bonddipole_cations-(energy_self_bd_new-energy_self_bd_old)-
                                      (energy_excluded_bd_new-energy_excluded_bd_old);
-    UCationCationChargeChargeFourierDelta[CurrentSystem]+=UIon[CurrentSystem]*SQR(NetChargeCations[CurrentSystem]+NetChargeCationDelta)-
-                                                          UIon[CurrentSystem]*SQR(NetChargeCations[CurrentSystem]);
   }
 
   if(!OmitInterMolecularInteractions)
@@ -8200,16 +8187,14 @@ int CalculateEwaldFourierCation(int NewMolecule,int OldMolecule,int mol,int stor
     UAdsorbateCationChargeChargeFourierDelta[CurrentSystem]=2.0*energy_charge_adsorbates_cations;
     UAdsorbateCationChargeBondDipoleFourierDelta[CurrentSystem]=2.0*energy_charge_bonddipole_adsorbates_cations;
     UAdsorbateCationBondDipoleBondDipoleFourierDelta[CurrentSystem]=2.0*energy_bonddipole_adsorbates_cations;
-    UAdsorbateCationChargeChargeFourierDelta[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeAdsorbates[CurrentSystem]*(NetChargeCations[CurrentSystem]+NetChargeCationDelta)-
-                                                             2.0*UIon[CurrentSystem]*NetChargeAdsorbates[CurrentSystem]*(NetChargeCations[CurrentSystem]);
   }
 
   UHostCationChargeChargeFourierDelta[CurrentSystem]=2.0*energy_charge_framework_cations;
   UHostCationChargeBondDipoleFourierDelta[CurrentSystem]=2.0*energy_charge_bonddipole_framework_cations;
   UHostCationBondDipoleBondDipoleFourierDelta[CurrentSystem]=2.0*energy_bonddipole_framework_cations;
-  UHostCationChargeChargeFourierDelta[CurrentSystem]+=2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*(NetChargeCations[CurrentSystem]+net_charge_new)-
-                                                      2.0*UIon[CurrentSystem]*NetChargeFramework[CurrentSystem]*(NetChargeCations[CurrentSystem]+net_charge_old);
 
+  // set net-charge difference
+  NetChargeCationDelta=net_charge_new-net_charge_old;
   return 0;
 }
 

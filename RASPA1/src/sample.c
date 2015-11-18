@@ -55,7 +55,6 @@
 #include "integrate.h"
 #include "integration.h"
 #include "mc_moves.h"
-#include "movies.h"
 
 // sampling the radial distribution function (RDF)
 int *ComputeRDF;
@@ -7601,17 +7600,13 @@ void SampleDensityProfile3DVTKGrid(int Switch)
 {
   int i,j,index,size;
   int x,y,z,Type;
-  int k1,k2,k3;
   VECTOR pos;
   char buffer[256];
   FILE *FilePtr;
-  REAL max_value,min_value;
-  static REAL max;
+  REAL max_value,min_value,max;
   static VECTOR shift;
   static VECTOR Size;
   VECTOR C,s,t;
-  static REAL_MATRIX3x3 Cell;
-  static REAL_MATRIX3x3 InverseCell;
 
   switch(Switch)
   {
@@ -7637,27 +7632,13 @@ void SampleDensityProfile3DVTKGrid(int Switch)
       }
       break;
     case INITIALIZE:
-      switch(DensityAveragingTypeVTK)
-      {
-        case VTK_UNIT_CELL:
-          Cell=UnitCellBox[CurrentSystem];
-          InverseCell=InverseUnitCellBox[CurrentSystem];
-          break;
-        case VTK_FULL_BOX:
-        default:
-          Cell=Box[CurrentSystem];
-          InverseCell=InverseBox[CurrentSystem];
-          break;
-      }
-      
-      Size.x=Size.y=Size.z=0.0;
       shift.x=shift.y=shift.z=0.0;
       C.x=1.0;
       C.y=0.0;
       C.z=0.0;
-      pos.x=Cell.ax*C.x+Cell.bx*C.y+Cell.cx*C.z;
-      pos.y=Cell.ay*C.x+Cell.by*C.y+Cell.cy*C.z;
-      pos.z=Cell.az*C.x+Cell.bz*C.y+Cell.cz*C.z;
+      pos.x=UnitCellBox[0].ax*C.x+UnitCellBox[0].bx*C.y+UnitCellBox[0].cx*C.z;
+      pos.y=UnitCellBox[0].ay*C.x+UnitCellBox[0].by*C.y+UnitCellBox[0].cy*C.z;
+      pos.z=UnitCellBox[0].az*C.x+UnitCellBox[0].bz*C.y+UnitCellBox[0].cz*C.z;
       Size.x+=fabs(pos.x);
       Size.y+=fabs(pos.y);
       Size.z+=fabs(pos.z);
@@ -7668,9 +7649,9 @@ void SampleDensityProfile3DVTKGrid(int Switch)
       C.x=0.0;
       C.y=1.0;
       C.z=0.0;
-      pos.x=Cell.ax*C.x+Cell.bx*C.y+Cell.cx*C.z;
-      pos.y=Cell.ay*C.x+Cell.by*C.y+Cell.cy*C.z;
-      pos.z=Cell.az*C.x+Cell.bz*C.y+Cell.cz*C.z;
+      pos.x=UnitCellBox[0].ax*C.x+UnitCellBox[0].bx*C.y+UnitCellBox[0].cx*C.z;
+      pos.y=UnitCellBox[0].ay*C.x+UnitCellBox[0].by*C.y+UnitCellBox[0].cy*C.z;
+      pos.z=UnitCellBox[0].az*C.x+UnitCellBox[0].bz*C.y+UnitCellBox[0].cz*C.z;
       Size.x+=fabs(pos.x);
       Size.y+=fabs(pos.y);
       Size.z+=fabs(pos.z);
@@ -7681,17 +7662,15 @@ void SampleDensityProfile3DVTKGrid(int Switch)
       C.x=0.0;
       C.y=0.0;
       C.z=1.0;
-      pos.x=Cell.ax*C.x+Cell.bx*C.y+Cell.cx*C.z;
-      pos.y=Cell.ay*C.x+Cell.by*C.y+Cell.cy*C.z;
-      pos.z=Cell.az*C.x+Cell.bz*C.y+Cell.cz*C.z;
+      pos.x=UnitCellBox[0].ax*C.x+UnitCellBox[0].bx*C.y+UnitCellBox[0].cx*C.z;
+      pos.y=UnitCellBox[0].ay*C.x+UnitCellBox[0].by*C.y+UnitCellBox[0].cy*C.z;
+      pos.z=UnitCellBox[0].az*C.x+UnitCellBox[0].bz*C.y+UnitCellBox[0].cz*C.z;
       Size.x+=fabs(pos.x);
       Size.y+=fabs(pos.y);
       Size.z+=fabs(pos.z);
       if(pos.x<0.0) shift.x+=pos.x;
       if(pos.y<0.0) shift.y+=pos.y;
       if(pos.z<0.0) shift.z+=pos.z;
-
-      max=MAX2(Size.x,MAX2(Size.y,Size.z));
       break;
     case SAMPLE:
       if(!ComputeDensityProfile3DVTKGrid[CurrentSystem]) return;
@@ -7705,64 +7684,27 @@ void SampleDensityProfile3DVTKGrid(int Switch)
           pos.y=Adsorbates[CurrentSystem][i].Atoms[j].Position.y;
           pos.z=Adsorbates[CurrentSystem][i].Atoms[j].Position.z;
 
-          // if averaged over all unit cell and using the full
-          if((AverageDensityOverUnitCellsVTK==TRUE)&&(DensityAveragingTypeVTK==VTK_FULL_BOX))
-          {
-            s.x=InverseUnitCellBox[CurrentSystem].ax*pos.x+InverseUnitCellBox[CurrentSystem].bx*pos.y+InverseUnitCellBox[CurrentSystem].cx*pos.z;
-            s.y=InverseUnitCellBox[CurrentSystem].ay*pos.x+InverseUnitCellBox[CurrentSystem].by*pos.y+InverseUnitCellBox[CurrentSystem].cy*pos.z;
-            s.z=InverseUnitCellBox[CurrentSystem].az*pos.x+InverseUnitCellBox[CurrentSystem].bz*pos.y+InverseUnitCellBox[CurrentSystem].cz*pos.z;
+          s.x=InverseUnitCellBox[CurrentSystem].ax*pos.x+InverseUnitCellBox[CurrentSystem].bx*pos.y+InverseUnitCellBox[CurrentSystem].cx*pos.z;
+          s.y=InverseUnitCellBox[CurrentSystem].ay*pos.x+InverseUnitCellBox[CurrentSystem].by*pos.y+InverseUnitCellBox[CurrentSystem].cy*pos.z;
+          s.z=InverseUnitCellBox[CurrentSystem].az*pos.x+InverseUnitCellBox[CurrentSystem].bz*pos.y+InverseUnitCellBox[CurrentSystem].cz*pos.z;
 
-            t.x=s.x-(REAL)NINT(s.x);
-            t.y=s.y-(REAL)NINT(s.y);
-            t.z=s.z-(REAL)NINT(s.z);
-            if(t.x<0.0) t.x+=1.0;
-            if(t.y<0.0) t.y+=1.0;
-            if(t.z<0.0) t.z+=1.0;
+          t.x=s.x-(REAL)NINT(s.x);
+          t.y=s.y-(REAL)NINT(s.y);
+          t.z=s.z-(REAL)NINT(s.z);
+          if(t.x<0.0) t.x+=1.0;
+          if(t.y<0.0) t.y+=1.0;
+          if(t.z<0.0) t.z+=1.0;
+          pos.x=UnitCellBox[CurrentSystem].ax*t.x+UnitCellBox[CurrentSystem].bx*t.y+UnitCellBox[CurrentSystem].cx*t.z;
+          pos.y=UnitCellBox[CurrentSystem].ay*t.x+UnitCellBox[CurrentSystem].by*t.y+UnitCellBox[CurrentSystem].cy*t.z;
+          pos.z=UnitCellBox[CurrentSystem].az*t.x+UnitCellBox[CurrentSystem].bz*t.y+UnitCellBox[CurrentSystem].cz*t.z;
 
-            for(k1=0;k1<NumberOfUnitCells[CurrentSystem].x;k1++)
-              for(k2=0;k2<NumberOfUnitCells[CurrentSystem].y;k2++)
-                for(k3=0;k3<NumberOfUnitCells[CurrentSystem].z;k3++)
-                {
-                  s.x=(t.x+k1)/NumberOfUnitCells[CurrentSystem].x;
-                  s.y=(t.y+k2)/NumberOfUnitCells[CurrentSystem].y;
-                  s.z=(t.z+k3)/NumberOfUnitCells[CurrentSystem].z;
-                  pos.x=Cell.ax*s.x+Cell.bx*s.y+Cell.cx*s.z;
-                  pos.y=Cell.ay*s.x+Cell.by*s.y+Cell.cy*s.z;
-                  pos.z=Cell.az*s.x+Cell.bz*s.y+Cell.cz*s.z;
+          x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
+          y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
+          z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
 
-                  x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
-                  y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
-                  z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
-
-                  index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
-                  if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
-                    DensityProfile3D[CurrentSystem][Type][index]+=1.0;
-                }
-          }
-          else // if not averaged over all unit-cells or just a single unit cell
-          {
-            s.x=InverseCell.ax*pos.x+InverseCell.bx*pos.y+InverseCell.cx*pos.z;
-            s.y=InverseCell.ay*pos.x+InverseCell.by*pos.y+InverseCell.cy*pos.z;
-            s.z=InverseCell.az*pos.x+InverseCell.bz*pos.y+InverseCell.cz*pos.z;
-
-            t.x=s.x-(REAL)NINT(s.x);
-            t.y=s.y-(REAL)NINT(s.y);
-            t.z=s.z-(REAL)NINT(s.z);
-            if(t.x<0.0) t.x+=1.0;
-            if(t.y<0.0) t.y+=1.0;
-            if(t.z<0.0) t.z+=1.0;
-            pos.x=Cell.ax*t.x+Cell.bx*t.y+Cell.cx*t.z;
-            pos.y=Cell.ay*t.x+Cell.by*t.y+Cell.cy*t.z;
-            pos.z=Cell.az*t.x+Cell.bz*t.y+Cell.cz*t.z;
-
-            x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
-            y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
-            z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
-
-            index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
-            if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
-              DensityProfile3D[CurrentSystem][Type][index]+=1.0;
-          }
+          index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
+          if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
+            DensityProfile3D[CurrentSystem][Type][index]+=1.0;
         }
       }
       for(i=0;i<NumberOfCationMolecules[CurrentSystem];i++)
@@ -7774,64 +7716,27 @@ void SampleDensityProfile3DVTKGrid(int Switch)
           pos.y=Cations[CurrentSystem][i].Atoms[j].Position.y;
           pos.z=Cations[CurrentSystem][i].Atoms[j].Position.z;
 
-          // if averaged over all unit cell and using the full
-          if((AverageDensityOverUnitCellsVTK==TRUE)&&(DensityAveragingTypeVTK==VTK_FULL_BOX))
-          {
-            s.x=InverseUnitCellBox[CurrentSystem].ax*pos.x+InverseUnitCellBox[CurrentSystem].bx*pos.y+InverseUnitCellBox[CurrentSystem].cx*pos.z;
-            s.y=InverseUnitCellBox[CurrentSystem].ay*pos.x+InverseUnitCellBox[CurrentSystem].by*pos.y+InverseUnitCellBox[CurrentSystem].cy*pos.z;
-            s.z=InverseUnitCellBox[CurrentSystem].az*pos.x+InverseUnitCellBox[CurrentSystem].bz*pos.y+InverseUnitCellBox[CurrentSystem].cz*pos.z;
+          s.x=InverseUnitCellBox[CurrentSystem].ax*pos.x+InverseUnitCellBox[CurrentSystem].bx*pos.y+InverseUnitCellBox[CurrentSystem].cx*pos.z;
+          s.y=InverseUnitCellBox[CurrentSystem].ay*pos.x+InverseUnitCellBox[CurrentSystem].by*pos.y+InverseUnitCellBox[CurrentSystem].cy*pos.z;
+          s.z=InverseUnitCellBox[CurrentSystem].az*pos.x+InverseUnitCellBox[CurrentSystem].bz*pos.y+InverseUnitCellBox[CurrentSystem].cz*pos.z;
 
-            t.x=s.x-(REAL)NINT(s.x);
-            t.y=s.y-(REAL)NINT(s.y);
-            t.z=s.z-(REAL)NINT(s.z);
-            if(t.x<0.0) t.x+=1.0;
-            if(t.y<0.0) t.y+=1.0;
-            if(t.z<0.0) t.z+=1.0;
+          t.x=s.x-(REAL)NINT(s.x);
+          t.y=s.y-(REAL)NINT(s.y);
+          t.z=s.z-(REAL)NINT(s.z);
+          if(t.x<0.0) t.x+=1.0;
+          if(t.y<0.0) t.y+=1.0;
+          if(t.z<0.0) t.z+=1.0;
+          pos.x=UnitCellBox[CurrentSystem].ax*t.x+UnitCellBox[CurrentSystem].bx*t.y+UnitCellBox[CurrentSystem].cx*t.z;
+          pos.y=UnitCellBox[CurrentSystem].ay*t.x+UnitCellBox[CurrentSystem].by*t.y+UnitCellBox[CurrentSystem].cy*t.z;
+          pos.z=UnitCellBox[CurrentSystem].az*t.x+UnitCellBox[CurrentSystem].bz*t.y+UnitCellBox[CurrentSystem].cz*t.z;
 
-            for(k1=0;k1<NumberOfUnitCells[CurrentSystem].x;k1++)
-              for(k2=0;k2<NumberOfUnitCells[CurrentSystem].y;k2++)
-                for(k3=0;k3<NumberOfUnitCells[CurrentSystem].z;k3++)
-                {
-                  s.x=(t.x+k1)/NumberOfUnitCells[CurrentSystem].x;
-                  s.y=(t.y+k2)/NumberOfUnitCells[CurrentSystem].y;
-                  s.z=(t.z+k3)/NumberOfUnitCells[CurrentSystem].z;
-                  pos.x=Cell.ax*s.x+Cell.bx*s.y+Cell.cx*s.z;
-                  pos.y=Cell.ay*s.x+Cell.by*s.y+Cell.cy*s.z;
-                  pos.z=Cell.az*s.x+Cell.bz*s.y+Cell.cz*s.z;
+          x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
+          y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
+          z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
 
-                  x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
-                  y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
-                  z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
-
-                  index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
-                  if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
-                    DensityProfile3D[CurrentSystem][Type][index]+=1.0;
-                }
-          }
-          else // if not averaged over all unit-cells or just a single unit cell
-          {
-            s.x=InverseCell.ax*pos.x+InverseCell.bx*pos.y+InverseCell.cx*pos.z;
-            s.y=InverseCell.ay*pos.x+InverseCell.by*pos.y+InverseCell.cy*pos.z;
-            s.z=InverseCell.az*pos.x+InverseCell.bz*pos.y+InverseCell.cz*pos.z;
-
-            t.x=s.x-(REAL)NINT(s.x);
-            t.y=s.y-(REAL)NINT(s.y);
-            t.z=s.z-(REAL)NINT(s.z);
-            if(t.x<0.0) t.x+=1.0;
-            if(t.y<0.0) t.y+=1.0;
-            if(t.z<0.0) t.z+=1.0;
-            pos.x=Cell.ax*t.x+Cell.bx*t.y+Cell.cx*t.z;
-            pos.y=Cell.ay*t.x+Cell.by*t.y+Cell.cy*t.z;
-            pos.z=Cell.az*t.x+Cell.bz*t.y+Cell.cz*t.z;
-
-            x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
-            y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
-            z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
-
-            index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
-            if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
-              DensityProfile3D[CurrentSystem][Type][index]+=1.0;
-          }
+          index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
+          if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
+            DensityProfile3D[CurrentSystem][Type][index]+=1.0;
         }
       }
       break;
@@ -7855,7 +7760,8 @@ void SampleDensityProfile3DVTKGrid(int Switch)
         fprintf(FilePtr,"DATASET STRUCTURED_POINTS\n");
         fprintf(FilePtr,"DIMENSIONS %d %d %d\n",DensityProfile3DVTKGridPoints.x,DensityProfile3DVTKGridPoints.y,DensityProfile3DVTKGridPoints.z);
 
-        //fprintf(FilePtr,"ASPECT_RATIO %f %f %f\n",(double)(Size.x/(max*NumberOfUnitCells[CurrentSystem].x)),(double)(Size.y/(max*NumberOfUnitCells[CurrentSystem].y)),(double)(Size.z/(max*NumberOfUnitCells[CurrentSystem].z)));
+        // restrict the size of the density grid to 150x150x150
+        max=MAX2(Size.x,MAX2(Size.y,Size.z));
         fprintf(FilePtr,"ASPECT_RATIO %f %f %f\n",(double)(Size.x/max),(double)(Size.y/max),(double)(Size.z/max));
         fprintf(FilePtr,"ORIGIN 0.0 0.0 0.0\n");
         fprintf(FilePtr,"\n");

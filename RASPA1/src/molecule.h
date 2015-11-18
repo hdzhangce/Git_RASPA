@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "simulation.h"
 #include "cubic_spline_1d.h"
+#include "grids.h"
 
 #define MAX_BOND_POTENTIAL_ARGUMENTS 20
 #define MAX_BEND_POTENTIAL_ARGUMENTS 10
@@ -245,6 +246,7 @@ typedef struct adsorbate
   int Type;               // the component type of the molecule
   int Fractional;         // whether the adsorbate is fractional or not
   int NumberOfAtoms;      // the number of atoms in the molecule
+  int Grid;				  // Adsorbate number based off of total adsorbates added 
   GROUP *Groups;          // data of the rigid groups
   ATOM *Atoms;            // list of atoms
 } ADSORBATE_MOLECULE;
@@ -261,6 +263,7 @@ extern int *NumberOfChargesPerSystem;
 extern int *NumberOfBondDipolesPerSystem;
 
 extern int *NumberOfAdsorbateMolecules;
+extern int *TotalAdsorbateMoleculesAdded;
 extern int CurrentAdsorbateMolecule;
 extern ADSORBATE_MOLECULE **Adsorbates;
 

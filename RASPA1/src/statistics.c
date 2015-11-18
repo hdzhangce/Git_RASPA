@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <time.h>
 #include "constants.h"
 #include "cbmc.h"
 #include "simulation.h"
@@ -1429,17 +1428,14 @@ VECTOR GetAverageComponentVectorProperty(VECTOR ***Property,int comp)
 
 void PrintIntervalStatusInit(long long CurrentCycle,long long NumberOfCycles,FILE *FilePtr)
 {
-  int i,j,k;
+  int i;
   REAL number_of_unit_cells;
   REAL loading,average_loading;
   VECTOR com;
-  REAL sum,sum2,tmp;
 
   fprintf(FilePtr,"[Init] Current cycle: %lld out of %lld\n",CurrentCycle,NumberOfCycles);
   fprintf(FilePtr,"========================================================================================================\n\n");
-  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/CLOCKS_PER_SEC);
-  fprintf(FilePtr,"Net charge: %g (F: %g, A: %g, C: %g)\n",NetChargeSystem[CurrentSystem],NetChargeFramework[CurrentSystem],
-                                                           NetChargeAdsorbates[CurrentSystem],NetChargeCations[CurrentSystem]);
+  fprintf(FilePtr,"Net charge: %18.10f\n",NetChargeSystem[CurrentSystem]);
 
   // write out the boxlengths
   fprintf(FilePtr,"Current Box: %9.5lf %9.5lf %9.5lf [A]\n",
@@ -1574,26 +1570,6 @@ void PrintIntervalStatusInit(long long CurrentCycle,long long NumberOfCycles,FIL
       fprintf(FilePtr,"\t\tCurrent Host-Bend/Torsion energy:     % 22.10lf [K]\n",
           (double)UHostBendTorsion[CurrentSystem]*ENERGY_TO_KELVIN);
   }
-// Report average Widom Rosenbluth factor for each cycle
-  fprintf(FilePtr,"\n");
-  fprintf(FilePtr,"Updated average Widom Rosenbluth factor:\n");
-  fprintf(FilePtr,"================================\n");
-  for(j=0;j<NumberOfComponents;j++)
-  {
-    sum=sum2=0.0;
-    if(WidomRosenbluthFactorCount[CurrentSystem][j][0]>0.0)
-    {
-      tmp=WidomRosenbluthFactorAverage[CurrentSystem][j][0]/
-          WidomRosenbluthFactorCount[CurrentSystem][j][0];
-      sum+=tmp;
-      sum2+=SQR(tmp);
-      fprintf(FilePtr,"\t[%s] Average Widom:   %lg \n",
-      Components[j].Name,
-      (double)(sum));
-    }
-    else
-      fprintf(FilePtr,"\t[%s] Average Widom:   0.0 \n");
-  }
   fprintf(FilePtr,"\n");
   PrintWarningStatus();
   fprintf(FilePtr,"\n\n");
@@ -1602,17 +1578,14 @@ void PrintIntervalStatusInit(long long CurrentCycle,long long NumberOfCycles,FIL
 
 void PrintIntervalStatusEquilibration(long long CurrentCycle,long long NumberOfCycles,FILE *FilePtr)
 {
-  int i,j,k;
+  int i;
   REAL number_of_unit_cells;
   REAL loading,average_loading;
   VECTOR com;
-  REAL sum,sum2,tmp;
 
   fprintf(FilePtr,"[Init] Current cycle: %lld out of %lld\n",CurrentCycle,NumberOfCycles);
   fprintf(FilePtr,"========================================================================================================\n\n");
-  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/CLOCKS_PER_SEC);
-  fprintf(FilePtr,"Net charge: %g (F: %g, A: %g, C: %g)\n",NetChargeSystem[CurrentSystem],NetChargeFramework[CurrentSystem],
-                                                           NetChargeAdsorbates[CurrentSystem],NetChargeCations[CurrentSystem]);
+  fprintf(FilePtr,"Net charge: %18.10f\n",NetChargeSystem[CurrentSystem]);
 
   // write out the boxlengths
   fprintf(FilePtr,"Current Box: %9.5lf %9.5lf %9.5lf [A]\n",
@@ -1782,26 +1755,7 @@ void PrintIntervalStatusEquilibration(long long CurrentCycle,long long NumberOfC
       fprintf(FilePtr,"\t\tCurrent Host-Bend/Torsion energy:     % 22.10lf [K]\n",
           (double)UHostBendTorsion[CurrentSystem]*ENERGY_TO_KELVIN);
   }
-// Report average Widom Rosenbluth factor for each cycle
-  fprintf(FilePtr,"\n");
-  fprintf(FilePtr,"Updated average Widom Rosenbluth factor:\n");
-  fprintf(FilePtr,"================================\n");
-  for(j=0;j<NumberOfComponents;j++)
-  {
-    sum=sum2=0.0;
-    if(WidomRosenbluthFactorCount[CurrentSystem][j][0]>0.0)
-    {
-      tmp=WidomRosenbluthFactorAverage[CurrentSystem][j][0]/
-          WidomRosenbluthFactorCount[CurrentSystem][j][0];
-      sum+=tmp;
-      sum2+=SQR(tmp);
-      fprintf(FilePtr,"\t[%s] Average Widom:   %lg \n",
-      Components[j].Name,
-      (double)(sum));
-    }
-    else
-      fprintf(FilePtr,"\t[%s] Average Widom:   0.0 \n");
-  }
+
   fprintf(FilePtr,"\n");
   PrintWarningStatus();
   fprintf(FilePtr,"\n\n");
@@ -2334,21 +2288,18 @@ void PrintPropertyStatus(long long CurrentCycle,long long NumberOfCycles, FILE *
 
 void PrintIntervalStatus(long long CurrentCycle,long long NumberOfCycles, FILE *FilePtr)
 {
-  int i,j,k;
+  int i;
   REAL number_of_unit_cells;
   REAL loading,average_loading,fac,fac2,temp;
   REAL_MATRIX3x3 Stress;
   VECTOR com;
-  REAL sum,sum2,tmp;
 
   fprintf(FilePtr,"Current cycle: %lld out of %lld\n",CurrentCycle,NumberOfCycles);
   fprintf(FilePtr,"========================================================================================================\n\n");
-  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/CLOCKS_PER_SEC);
   if(SimulationType==MOLECULAR_DYNAMICS)
     fprintf(FilePtr,"Time run: %10.6lf [ps] %10.6lf [ns] \n",(double)(DeltaT*(REAL)(double)CurrentCycle),(double)(1e-3*DeltaT*(REAL)(double)CurrentCycle));
 
-  fprintf(FilePtr,"Net charge: %g (F: %g, A: %g, C: %g)\n",NetChargeSystem[CurrentSystem],NetChargeFramework[CurrentSystem],
-                                                           NetChargeAdsorbates[CurrentSystem],NetChargeCations[CurrentSystem]);
+  fprintf(FilePtr,"Net charge: %18.10f\n",NetChargeSystem[CurrentSystem]);
 
   // write out the boxlengths
   fprintf(FilePtr,"Current Box: %9.5lf %9.5lf %9.5lf [A]   Average Box: %9.5lf %9.5lf %9.5lf [A]\n",
@@ -2617,26 +2568,7 @@ void PrintIntervalStatus(long long CurrentCycle,long long NumberOfCycles, FILE *
       fprintf(FilePtr,"\t\tCurrent Host-Bend/Torsion energy:     % 22.10lf [K]  (avg. % 22.10lf)\n\n",
           (double)UHostBendTorsion[CurrentSystem]*ENERGY_TO_KELVIN,(double)GetAverageProperty(UHostBendTorsionAverage)*ENERGY_TO_KELVIN);
   }
-// Report average Widom Rosenbluth factor for each cycle
-  fprintf(FilePtr,"\n");
-  fprintf(FilePtr,"Updated average Widom Rosenbluth factor:\n");
-  fprintf(FilePtr,"================================\n");
-  for(j=0;j<NumberOfComponents;j++)
-  {
-    sum=sum2=0.0;
-    if(WidomRosenbluthFactorCount[CurrentSystem][j][0]>0.0)
-    {
-      tmp=WidomRosenbluthFactorAverage[CurrentSystem][j][0]/
-          WidomRosenbluthFactorCount[CurrentSystem][j][0];
-      sum+=tmp;
-      sum2+=SQR(tmp);
-      fprintf(FilePtr,"\t[%s] Average Widom:   %lg \n",
-      Components[j].Name,
-      (double)(sum));
-    }
-    else
-      fprintf(FilePtr,"\t[%s] Average Widom:   0.0 \n");
-  }
+
   fprintf(FilePtr,"\n");
   PrintWarningStatus();
   fprintf(FilePtr,"\n\n");

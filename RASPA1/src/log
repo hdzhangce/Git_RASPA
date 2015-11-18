@@ -1,0 +1,115 @@
+grids.c:    center=ConvertPositionToVTKPosition(center);
+grids.c:             // (pores can also be blocked to visualize just the pockets in VTK)
+Binary file grids.o matches
+input.c:  WriteVTKGrids=FALSE;
+input.c:  DensityProfile3DVTKGridPoints.x=150;
+input.c:  DensityProfile3DVTKGridPoints.y=150;
+input.c:  DensityProfile3DVTKGridPoints.z=150;
+input.c:    ComputeDensityProfile3DVTKGrid[i]=FALSE;
+input.c:    WriteDensityProfile3DVTKGridEvery[i]=5000;
+input.c:    if(strcasecmp("ComputeDensityProfile3DVTKGrid",keyword)==0) 
+input.c:      if(strcasecmp("yes",firstargument)==0) ComputeDensityProfile3DVTKGrid[CurrentSystem]=TRUE;
+input.c:      if(strcasecmp("no",firstargument)==0) ComputeDensityProfile3DVTKGrid[CurrentSystem]=FALSE;
+input.c:    if(strcasecmp("WriteDensityProfile3DVTKGridEvery",keyword)==0) sscanf(arguments,"%d",&WriteDensityProfile3DVTKGridEvery[CurrentSystem]);
+input.c:    if(strcasecmp("DensityProfile3DVTKGridPoints",keyword)==0) 
+input.c:      sscanf(arguments,"%d %d %d",&DensityProfile3DVTKGridPoints.x,&DensityProfile3DVTKGridPoints.y,&DensityProfile3DVTKGridPoints.z);
+input.c:    if(strcasecmp("WriteVTKGrids",keyword)==0)
+input.c:      if(strcasecmp("yes",firstargument)==0) WriteVTKGrids=TRUE;
+input.c:      if(strcasecmp("no",firstargument)==0) WriteVTKGrids=FALSE;
+input.c:    WriteVTK(i);
+Binary file input.o matches
+molecular_dynamics.c:  SampleDensityProfile3DVTKGrid(ALLOCATE);
+molecular_dynamics.c:    SampleDensityProfile3DVTKGrid(INITIALIZE);
+molecular_dynamics.c:      SampleDensityProfile3DVTKGrid(SAMPLE);
+molecular_dynamics.c:    SampleDensityProfile3DVTKGrid(FINALIZE);
+Binary file molecular_dynamics.o matches
+monte_carlo.c:  SampleDensityProfile3DVTKGrid(ALLOCATE);
+monte_carlo.c:    SampleDensityProfile3DVTKGrid(INITIALIZE);
+monte_carlo.c:        SampleDensityProfile3DVTKGrid(SAMPLE);
+monte_carlo.c:        SampleDensityProfile3DVTKGrid(PRINT);
+monte_carlo.c:  SampleDensityProfile3DVTKGrid(FINALIZE);
+Binary file monte_carlo.o matches
+movies.c:int WriteVTKGrids;
+movies.c:VECTOR ConvertPositionToVTKPosition(VECTOR pos3)
+movies.c:void WriteVTK(int system)
+movies.c:  mkdir("VTK",S_IRWXU);
+movies.c:  sprintf(buffer,"VTK/System_%d",system);
+movies.c:  sprintf(buffer,"VTK/System_%d/Frame%s.vtk",system,FileNameAppend);
+movies.c:  sprintf(buffer,"VTK/System_%d/FrameworkAtoms%s.vtk",system,FileNameAppend);
+movies.c:    // transform color to a number between 0 and 1 (required by VTK)
+movies.c:  // this is needed at the top of the VTK-file
+movies.c:  sprintf(buffer,"VTK/System_%d/AdsorbateAtoms%s.vtk",system,FileNameAppend);
+movies.c:  // this is needed at the top of the VTK-file
+movies.c:  sprintf(buffer,"VTK/System_%d/CationAtoms%s.vtk",system,FileNameAppend);
+movies.c:  if(WriteVTKGrids)
+movies.c:        sprintf(buffer,"VTK/System_%d/Grid_%d%s.vtk",system,l,FileNameAppend);
+movies.c:        sprintf(buffer,"VTK/System_%d/Grid_%d%s.vtk",system,l,FileNameAppend);
+movies.c:      mkdir("VTK",S_IRWXU);
+movies.c:      sprintf(buffer,"VTK/System_%d",CurrentSystem);
+movies.c:      sprintf(buffer,"VTK/System_%d/FrameworkSurface%s.vtk",CurrentSystem,FileNameAppend);
+movies.h:extern int WriteVTKGrids;
+movies.h:VECTOR ConvertPositionToVTKPosition(VECTOR pos);
+movies.h:void WriteVTK(int system);
+Binary file movies.o matches
+output.c:  fprintf(FilePtr,"3D density grid for adsorbates: %s\n",ComputeDensityProfile3DVTKGrid[system]?"yes":"no");
+output.c:  if(ComputeDensityProfile3DVTKGrid[system])
+output.c:    fprintf(FilePtr,"\t3D density grids for adsorbates are written to file every %d cycles\n",WriteDensityProfile3DVTKGridEvery[system]);
+Binary file output.o matches
+sample.c:// Calculates a free-energy profile in 3d and outputs in VTK-format
+sample.c:int *ComputeDensityProfile3DVTKGrid;
+sample.c:int *WriteDensityProfile3DVTKGridEvery;
+sample.c:INT_VECTOR3 DensityProfile3DVTKGridPoints;
+sample.c: * Name       | SampleDensityProfile3DVTKGrid                                                            *
+sample.c:void SampleDensityProfile3DVTKGrid(int Switch)
+sample.c:      if((DensityProfile3DVTKGridPoints.x<=0)||(DensityProfile3DVTKGridPoints.y<=0)||(DensityProfile3DVTKGridPoints.z<=0))
+sample.c:        printf("ERROR: number of gridpoint (%d, %d, %d) in CreateDensity3DVTKProfileGrid should be >0\n",
+sample.c:          DensityProfile3DVTKGridPoints.x,DensityProfile3DVTKGridPoints.y,DensityProfile3DVTKGridPoints.z);
+sample.c:      size=DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z;
+sample.c:        if(ComputeDensityProfile3DVTKGrid[i])
+sample.c:      if(!ComputeDensityProfile3DVTKGrid[CurrentSystem]) return;
+sample.c:          x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
+sample.c:          y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
+sample.c:          z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
+sample.c:          index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
+sample.c:          if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
+sample.c:          x=(int)((pos.x-shift.x)*(REAL)DensityProfile3DVTKGridPoints.x/Size.x);
+sample.c:          y=(int)((pos.y-shift.y)*(REAL)DensityProfile3DVTKGridPoints.y/Size.y);
+sample.c:          z=(int)((pos.z-shift.z)*(REAL)DensityProfile3DVTKGridPoints.z/Size.z);
+sample.c:          index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
+sample.c:          if((index>0)&&(index<DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z))
+sample.c:      if((!ComputeDensityProfile3DVTKGrid[CurrentSystem])||(CurrentCycle%WriteDensityProfile3DVTKGridEvery[CurrentSystem]!=0)) return;
+sample.c:      mkdir("VTK",S_IRWXU);
+sample.c:      sprintf(buffer,"VTK/System_%d",CurrentSystem);
+sample.c:        sprintf(buffer,"VTK/System_%d/DensityProfile_%s%s.vtk",CurrentSystem,Components[i].Name,FileNameAppend);
+sample.c:        fprintf(FilePtr,"DIMENSIONS %d %d %d\n",DensityProfile3DVTKGridPoints.x,DensityProfile3DVTKGridPoints.y,DensityProfile3DVTKGridPoints.z);
+sample.c:        fprintf(FilePtr,"POINT_DATA %d\n",DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*DensityProfile3DVTKGridPoints.z);
+sample.c:        for(z=0;z<DensityProfile3DVTKGridPoints.z;z++)
+sample.c:          for(y=0;y<DensityProfile3DVTKGridPoints.y;y++)
+sample.c:            for(x=0;x<DensityProfile3DVTKGridPoints.x;x++)
+sample.c:              index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
+sample.c:        for(z=0;z<DensityProfile3DVTKGridPoints.z;z++)
+sample.c:          for(y=0;y<DensityProfile3DVTKGridPoints.y;y++)
+sample.c:            for(x=0;x<DensityProfile3DVTKGridPoints.x;x++)
+sample.c:              index=x+y*DensityProfile3DVTKGridPoints.y+z*DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y;
+sample.c:        if(ComputeDensityProfile3DVTKGrid[i])
+sample.c:  fwrite(ComputeDensityProfile3DVTKGrid,NumberOfSystems,sizeof(int),FilePtr);
+sample.c:  fwrite(WriteDensityProfile3DVTKGridEvery,NumberOfSystems,sizeof(int),FilePtr);
+sample.c:  fwrite(&DensityProfile3DVTKGridPoints,1,sizeof(INT_VECTOR3),FilePtr);
+sample.c:    if(ComputeDensityProfile3DVTKGrid[i])
+sample.c:        fwrite(DensityProfile3D[i][j],DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*
+sample.c:              DensityProfile3DVTKGridPoints.z,sizeof(REAL),FilePtr);
+sample.c:  WriteDensityProfile3DVTKGridEvery=(int*)calloc(NumberOfSystems,sizeof(int));
+sample.c:  ComputeDensityProfile3DVTKGrid=(int*)calloc(NumberOfSystems,sizeof(int));
+sample.c:  fread(ComputeDensityProfile3DVTKGrid,NumberOfSystems,sizeof(int),FilePtr);
+sample.c:  fread(WriteDensityProfile3DVTKGridEvery,NumberOfSystems,sizeof(int),FilePtr);
+sample.c:  fread(&DensityProfile3DVTKGridPoints,1,sizeof(INT_VECTOR3),FilePtr);
+sample.c:  SampleDensityProfile3DVTKGrid(ALLOCATE);
+sample.c:    if(ComputeDensityProfile3DVTKGrid[i])
+sample.c:        fread(DensityProfile3D[i][j],DensityProfile3DVTKGridPoints.x*DensityProfile3DVTKGridPoints.y*
+sample.c:              DensityProfile3DVTKGridPoints.z,sizeof(REAL),FilePtr);
+sample.h:void SampleDensityProfile3DVTKGrid(int);
+sample.h:extern int *WriteDensityProfile3DVTKGridEvery;
+sample.h:extern int *ComputeDensityProfile3DVTKGrid;
+sample.h:extern INT_VECTOR3 DensityProfile3DVTKGridPoints;
+Binary file sample.o matches
+Binary file simulate matches

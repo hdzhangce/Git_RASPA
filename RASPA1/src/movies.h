@@ -31,24 +31,10 @@
 #endif
 
 enum{PDB,CSSR,MOL,XYZ,VASP};
-enum{VTK_UNIT_CELL,VTK_FULL_BOX};
 
 extern REAL MovieScale;
 
 extern int WriteVTKGrids;
-
-extern VECTOR VTKFractionalFrameworkAtomsMin;
-extern VECTOR VTKFractionalFrameworkAtomsMax;
-extern VECTOR VTKFractionalFrameworkBondsMin;
-extern VECTOR VTKFractionalFrameworkBondsMax;
-extern VECTOR VTKFractionalAdsorbateComMin;
-extern VECTOR VTKFractionalAdsorbateComMax;
-extern VECTOR VTKFractionalCationComMin;
-extern VECTOR VTKFractionalCationComMax;
-
-extern int FreeEnergyAveragingTypeVTK;
-extern int DensityAveragingTypeVTK;
-extern int AverageDensityOverUnitCellsVTK;
 
 extern int *Movies;
 extern int *WriteMoviesEvery;

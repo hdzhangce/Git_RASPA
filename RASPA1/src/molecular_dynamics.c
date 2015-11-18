@@ -55,7 +55,7 @@
 
 void MolecularDynamicsSimulation(void)
 {
-  int i,j,k,widomi;
+  int i,j,k;
   REAL ran;
 
   // for a crash-recovery we skip the initialization and jump to the
@@ -342,6 +342,7 @@ void MolecularDynamicsSimulation(void)
   SimulationStage=PRODUCTION;
   for(CurrentCycle=0;CurrentCycle<NumberOfCycles;CurrentCycle++)
   {
+
     // detect erroneous chirality changes
     for(CurrentSystem=0;CurrentSystem<NumberOfSystems;CurrentSystem++)
       CheckChiralityMolecules();
@@ -361,6 +362,8 @@ void MolecularDynamicsSimulation(void)
         PrintRestartFile();
       }
 
+
+   
       // insertion/deletion for the osmotic-ensemble
       if(Ensemble[CurrentSystem]==MuPT)
       {
@@ -375,11 +378,8 @@ void MolecularDynamicsSimulation(void)
 
       for(CurrentComponent=0;CurrentComponent<NumberOfComponents;CurrentComponent++)
       {
-       if(Components[CurrentComponent].FractionOfWidomMove>0.0)
-          for(widomi=0;widomi<100;widomi++)
-          {
-            WidomMove();
-          }
+        if(Components[CurrentComponent].FractionOfWidomMove>0.0)
+          WidomMove();
       }
 
       // evolve the system a full time step
@@ -399,6 +399,11 @@ void MolecularDynamicsSimulation(void)
         exit(0);
       }
     }
+
+    if((CurrentCycle>0)&&(WriteBinaryRestartFileEvery>0)&&(CurrentCycle%WriteBinaryRestartFileEvery==0))
+      WriteBinaryRestartFiles();
+
+    ContinueAfterCrashLabel3:;
 
     for(CurrentSystem=0;CurrentSystem<NumberOfSystems;CurrentSystem++)
     {
@@ -426,41 +431,6 @@ void MolecularDynamicsSimulation(void)
       SampleCationAndAdsorptionSites(SAMPLE);
       SampleDcTSTConfigurationFiles(SAMPLE);
       SamplePDBMovies(SAMPLE,-1);
-    }
-
-    if((CurrentCycle>0)&&(WriteBinaryRestartFileEvery>0)&&(CurrentCycle%WriteBinaryRestartFileEvery==0))
-      WriteBinaryRestartFiles();
-
-    ContinueAfterCrashLabel3:;
-
-    for(CurrentSystem=0;CurrentSystem<NumberOfSystems;CurrentSystem++)
-    {
-      // regulary output sampling function
-      SampleRadialDistributionFunction(PRINT);
-      SampleNumberOfMoleculesHistogram(PRINT);
-      SamplePositionHistogram(PRINT);
-      SampleFreeEnergyProfile(PRINT);
-      SampleEndToEndDistanceHistogram(PRINT);
-      SampleEnergyHistogram(PRINT);
-      SampleFrameworkSpacingHistogram(PRINT);
-      SampleResidenceTimes(PRINT);
-      SampleDistanceHistogram(PRINT);
-      SampleBendAngleHistogram(PRINT);
-      SampleDihedralAngleHistogram(PRINT);
-      SampleAngleBetweenPlanesHistogram(PRINT);
-      SampleMoleculePropertyHistogram(PRINT);
-      SampleInfraRedSpectra(PRINT);
-      SampleMeanSquaredDisplacementOrderN(PRINT);
-      SampleVelocityAutoCorrelationFunctionOrderN(PRINT);
-      SampleRotationalVelocityAutoCorrelationFunctionOrderN(PRINT);
-      SampleMolecularOrientationAutoCorrelationFunctionOrderN(PRINT);
-      SampleMeanSquaredDisplacement(PRINT);
-      SampleVelocityAutoCorrelationFunction(PRINT);
-      SampleDensityProfile3DVTKGrid(PRINT);
-      SampleCationAndAdsorptionSites(PRINT);
-      SampleDcTSTConfigurationFiles(PRINT);
-      if(Movies[CurrentSystem]&&(CurrentCycle%WriteMoviesEvery[CurrentSystem]==0))
-        SamplePDBMovies(PRINT,-1);
     }
   }
 

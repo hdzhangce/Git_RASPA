@@ -734,49 +734,6 @@ VECTOR Perpendicular(VECTOR a,VECTOR b)
   return v;
 }
 
-// Random-rotation matrix Shoemake’s method
-void RandomArrayRotationMatrix(VECTOR *Cord,int n)
-{
-  int i;
-  REAL R[3][3];
-  POINT p;
-  REAL R1,R2;
-  REAL X0,Y1,Y2;
-  REAL U0,U1,U2,U3;
-  REAL COEFI,COEFUU,COEFE;
-
-  X0=RandomNumber();
-  Y1=2.0*M_PI*RandomNumber();
-  Y2=2.0*M_PI*RandomNumber();
-  R1=sqrt(1.0-X0);
-  R2=sqrt(X0);
-  U0=cos(Y2)*R2;
-  U1=sin(Y1)*R1;
-  U2=cos(Y1)*R1;
-  U3=sin(Y2)*R2;
-  COEFI=2.0*U0*U0-1.0;
-  COEFUU=2.0;
-  COEFE=2.0*U0;
-  R[0][0]=COEFI+COEFUU*U1*U1;
-  R[1][1]=COEFI+COEFUU*U2*U2;
-  R[2][2]=COEFI+COEFUU*U3*U3;
-  R[1][2]=COEFUU*U2*U3-COEFE*U1;
-  R[2][0]=COEFUU*U3*U1-COEFE*U2;
-  R[0][1]=COEFUU*U1*U2-COEFE*U3;
-  R[2][1]=COEFUU*U3*U2+COEFE*U1;
-  R[0][2]=COEFUU*U1*U3+COEFE*U2;
-  R[1][0]=COEFUU*U2*U1+COEFE*U3;
-
-  for(i=0;i<n;i++)
-  {
-    p.x=Cord[i].x*R[0][0]+Cord[i].y*R[0][1]+Cord[i].z*R[0][2];
-    p.y=Cord[i].x*R[1][0]+Cord[i].y*R[1][1]+Cord[i].z*R[1][2];
-    p.z=Cord[i].x*R[2][0]+Cord[i].y*R[2][1]+Cord[i].z*R[2][2];
-    Cord[i]=p;
-  }
-}
-
-
 void RotationAroundXYZAxis(VECTOR v,VECTOR *Cord,int n,REAL theta)
 {
   int i;

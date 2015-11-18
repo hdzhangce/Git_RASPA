@@ -45,6 +45,7 @@
 #include "ewald.h"
 #include "utils.h"
 #include "mc_moves.h"
+#include "grids.h"
 
 int BiasingMethod;
 
@@ -106,6 +107,7 @@ int MaxNumberOfIntraVDW;
 int MaxNumberOfIntraChargeCharge;
 int MaxNumberOfIntraChargeBondDipole;
 int MaxNumberOfIntraBondDipoleBondDipole;
+int Testpoint;
 
 static int NumberOfBonds;            // the number of bonds around the current-bead
 static int *Bonds;                   // a list of bond-ids
@@ -546,171 +548,386 @@ enum {CBMC_INSERTION,CBMC_PARTIAL_INSERTION,CBMC_DELETION,CBMC_RETRACE_REINSERTI
 //        See Esselink/Loyens/Smit, Phys.Rev.E.,1995,51,2.
 int HandleFirstBead(int Code)
 {
-  int i,type,start;
-  int NumberOfFirstPositions;
-  REAL EnergyHostVDW,EnergyAdsorbateVDW,EnergyCationVDW;
-  REAL EnergyHostChargeCharge,EnergyAdsorbateChargeCharge,EnergyCationChargeCharge;
-  REAL EnergyHostChargeBondDipole,EnergyAdsorbateChargeBondDipole,EnergyCationChargeBondDipole;
-  POINT posA,s;
-  static double ERR;
+    int i,j,k,l,type,start;
+	int NumberOfFirstPositions;
+	REAL cw,ws,VDWGridEnergy;
+	REAL EnergyHostVDW,EnergyAdsorbateVDW,EnergyCationVDW;
+	REAL EnergyHostChargeCharge,EnergyAdsorbateChargeCharge,EnergyCationChargeCharge;
+	REAL EnergyHostChargeBondDipole,EnergyAdsorbateChargeBondDipole,EnergyCationChargeBondDipole;
+	VECTOR posA,s;
+	INT_VECTOR3 GridIndex;
+	static double ERR;
+	
+	OVERLAP=TRUE;
+	RosenBluthFactorFirstBead=0.0;
+	if((Code==2)||(Code==4)) NumberOfFirstPositions=1;
+	else NumberOfFirstPositions=NumberOfTrialPositionsForTheFirstBead;
+		
+	if (UseTabularGrid && EBCBMC && Code==1 && BiasingMethod==LJ_BIASING) {
+		
+		start=Components[CurrentComponent].StartingBead;
+		type=Components[CurrentComponent].Type[start];
+		OVERLAP=FALSE;
 
-  OVERLAP=TRUE;
-  RosenBluthFactorFirstBead=0.0;
-  if((Code==2)||(Code==4)) NumberOfFirstPositions=1;
-  else NumberOfFirstPositions=NumberOfTrialPositionsForTheFirstBead;
+		//Randomly pick a weighted point
+		ws=RandomNumber();
+		i=(int)(NumberOfEBCBMCBins*ws)-1;
+		j=0;
+		cw = 0.0;
+		while (i<(NumberOfEBCBMCBins-1) && cw < ws) {
+			i++;
+			j=-1;
+			while (SizeOfEBCBMCBins[type][i]>0 && j<(SizeOfEBCBMCBins[type][i]-1) && cw < ws) {
+				j++;
+				cw=EBCBMCValue[type][i][j];
+			}
+		}
+		
+		VDWGridEnergy=VDWGrid[type][EBCBMCGridLocation[type][i][j].x][EBCBMCGridLocation[type][i][j].y][EBCBMCGridLocation[type][i][j].z][0];
+		//Randomly find that point's position within the cublet
 
-  for(i=0;i<NumberOfFirstPositions;i++)
-  {
-    if((i==0)&&(Code!=1))
-      Trial[i]=FirstBeadPosition;
-    else
-    {
-      FirstBeadPosition.x=FirstBeadPosition.y=FirstBeadPosition.z=0.0;
-      if(Components[CurrentComponent].RestrictMoves)
-      {
-        // generate random fractional point between 0.0 and 1.0 and retry when it is not inside the specified range
-        s.x=s.y=s.z=0.0;
-        do
-        {
-          switch(Dimension)
-          {
-            case 3:
-              s.z=RandomNumber();
-            case 2:
-              s.y=RandomNumber();
-            case 1:
-              s.x=RandomNumber();
-              break;
-          }
+		posA.x=(REAL)EBCBMCGridLocation[type][i][j].x+(RandomNumber()-0.5);
+		posA.y=(REAL)EBCBMCGridLocation[type][i][j].y+(RandomNumber()-0.5);
+		posA.z=(REAL)EBCBMCGridLocation[type][i][j].z+(RandomNumber()-0.5);
+		posA = ConvertCBMCGridPosToXYZ(posA);
+		EnergyHostVDW=EnergyAdsorbateVDW=EnergyCationVDW=0.0;
+		EnergyHostChargeCharge=EnergyAdsorbateChargeCharge=EnergyCationChargeCharge=0.0;
+		EnergyHostChargeBondDipole=EnergyAdsorbateChargeBondDipole=EnergyCationChargeBondDipole=0.0;
+		EnergyHostChargeCharge=EnergyAdsorbateChargeCharge=EnergyCationChargeCharge=0.0;
+		EnergyHostChargeBondDipole=EnergyAdsorbateChargeBondDipole=EnergyCationChargeBondDipole=0.0;
+		
+		if (UseEBCBMCEnergyFirstBead) {
+			
+			// calculate energies
+			EnergyHostVDW=CalculateFrameworkVDWEnergyAtPosition(posA,type);
+			CalculateFrameworkChargeEnergyAtPosition(posA,type,&EnergyHostChargeCharge,&EnergyHostChargeBondDipole);
+		
+			// compute VDW energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
+			if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateVDWInteractions))
+				EnergyAdsorbateVDW=CalculateInterVDWEnergyAdsorbateAtPosition(posA,type,CurrentAdsorbateMolecule);
+		
+			// compute Coulomb energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
+			if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateCoulombInteractions))
+				CalculateInterChargeEnergyAdsorbateAtPosition(posA,type,&EnergyAdsorbateChargeCharge,&EnergyAdsorbateChargeBondDipole,CurrentAdsorbateMolecule);
+		
+			// compute VDW energy with cations if no omit of cation-cation or the current molecule is an adsorbate
+			if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationVDWInteractions))
+				EnergyCationVDW=CalculateInterVDWEnergyCationAtPosition(posA,type,CurrentCationMolecule);
+		
+			// compute Coulomb energy with cations if no omit of cation-cation or the current molecule is an adsorbate
+			if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationCoulombInteractions))
+				CalculateInterChargeEnergyCationAtPosition(posA,type,&EnergyCationChargeCharge,&EnergyCationChargeBondDipole,CurrentCationMolecule);
+		
+			// update positions and energies
+			FirstBeadPosition=posA;
+		
+			EnergyHostVDWFirstBead=EnergyHostVDW;
+			EnergyAdsorbateVDWFirstBead=EnergyAdsorbateVDW;
+			EnergyCationVDWFirstBead=EnergyCationVDW;
+		
+			EnergyHostChargeChargeFirstBead=EnergyHostChargeCharge;
+			EnergyAdsorbateChargeChargeFirstBead=EnergyAdsorbateChargeCharge;
+			EnergyCationChargeChargeFirstBead=EnergyCationChargeCharge;
+		
+			EnergyHostChargeBondDipoleFirstBead=EnergyHostChargeBondDipole;
+			EnergyAdsorbateChargeBondDipoleFirstBead=EnergyAdsorbateChargeBondDipole;
+			EnergyCationChargeBondDipoleFirstBead=EnergyCationChargeBondDipole;
+		
+			EnergyHostBondDipoleBondDipoleFirstBead=0.0;
+			EnergyAdsorbateBondDipoleBondDipoleFirstBead=0.0;
+			EnergyCationBondDipoleBondDipoleFirstBead=0.0;
+		
+			ERR=SumVDWGridRosenbluth[type]-exp(-Beta[CurrentSystem]*VDWGridEnergy);
+		
+			//Caculate Rosenbluth factor for the first bead
+			RosenBluthFactorFirstBead=SumVDWGridRosenbluth[type]*(1.0/(REAL)(EBCBMCVolume))*exp(-Beta[CurrentSystem]*(EnergyHostVDW+EnergyAdsorbateVDW+EnergyCationVDW-VDWGridEnergy));
+			
+		}
+		
+		else {
+			
+			FirstBeadPosition=posA;
+			EnergyHostVDWFirstBead=0;
+			EnergyAdsorbateVDWFirstBead=0;
+			EnergyCationVDWFirstBead=0;
+			
+			EnergyHostChargeChargeFirstBead=0;
+			EnergyAdsorbateChargeChargeFirstBead=0;
+			EnergyCationChargeChargeFirstBead=0;
+			
+			EnergyHostChargeBondDipoleFirstBead=0;
+			EnergyAdsorbateChargeBondDipoleFirstBead=0;
+			EnergyCationChargeBondDipoleFirstBead=0;
+			
+			EnergyHostBondDipoleBondDipoleFirstBead=0.0;
+			EnergyAdsorbateBondDipoleBondDipoleFirstBead=0.0;
+			EnergyCationBondDipoleBondDipoleFirstBead=0.0;
+			
+			// calculate energies
+			EnergyHostVDW=CalculateFrameworkVDWEnergyAtPosition(posA,type);
 
-          // convert to a the Cartesian position in the simulation box
-          FirstBeadPosition.x=Box[CurrentSystem].ax*s.x+Box[CurrentSystem].bx*s.y+Box[CurrentSystem].cx*s.z;
-          FirstBeadPosition.y=Box[CurrentSystem].ay*s.x+Box[CurrentSystem].by*s.y+Box[CurrentSystem].cy*s.z;
-          FirstBeadPosition.z=Box[CurrentSystem].az*s.x+Box[CurrentSystem].bz*s.y+Box[CurrentSystem].cz*s.z;
-        } while(!ValidCartesianPoint(CurrentComponent,FirstBeadPosition));
-      }
-      else
-      {
-        // generate random fractional point between 0 and 1
-        s.x=s.y=s.z=0.0;
-        switch(Dimension)
-        {
-          case 3:
-            s.z=RandomNumber();
-          case 2:
-            s.y=RandomNumber();
-          case 1:
-            s.x=RandomNumber();
-            break;
-        }
-        FirstBeadPosition=ConvertFromABCtoXYZ(s);
-      }
-      Trial[i]=FirstBeadPosition;
-    }
+			//Caculate Rosenbluth factor for the first bead
+			RosenBluthFactorFirstBead=SumVDWGridRosenbluth[type]*(1.0/(REAL)(EBCBMCVolume))*exp(-Beta[CurrentSystem]*(-EnergyHostVDW));
+			
+		}
+	}
+	else if (UseTabularGrid && EBCBMC && Code==3 && BiasingMethod==LJ_BIASING)
+	{
+		posA=FirstBeadPosition;
+		start=Components[CurrentComponent].StartingBead;
+		type=Components[CurrentComponent].Type[start];
+		OVERLAP=FALSE;
+		
+		EnergyHostVDW=EnergyAdsorbateVDW=EnergyCationVDW=0.0;
+		EnergyHostChargeCharge=EnergyAdsorbateChargeCharge=EnergyCationChargeCharge=0.0;
+		EnergyHostChargeBondDipole=EnergyAdsorbateChargeBondDipole=EnergyCationChargeBondDipole=0.0;
+		EnergyHostChargeCharge=EnergyAdsorbateChargeCharge=EnergyCationChargeCharge=0.0;
+		EnergyHostChargeBondDipole=EnergyAdsorbateChargeBondDipole=EnergyCationChargeBondDipole=0.0;
+		
+		if (UseEBCBMCEnergyFirstBead) {
+			
+			// calculate energies
+			EnergyHostVDW=CalculateFrameworkVDWEnergyAtPosition(posA,type);
+			CalculateFrameworkChargeEnergyAtPosition(posA,type,&EnergyHostChargeCharge,&EnergyHostChargeBondDipole);
+			
+			// compute VDW energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
+			if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateVDWInteractions))
+				EnergyAdsorbateVDW=CalculateInterVDWEnergyAdsorbateAtPosition(posA,type,CurrentAdsorbateMolecule);
+			
+			// compute Coulomb energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
+			if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateCoulombInteractions))
+				CalculateInterChargeEnergyAdsorbateAtPosition(posA,type,&EnergyAdsorbateChargeCharge,&EnergyAdsorbateChargeBondDipole,CurrentAdsorbateMolecule);
+			
+			// compute VDW energy with cations if no omit of cation-cation or the current molecule is an adsorbate
+			if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationVDWInteractions))
+				EnergyCationVDW=CalculateInterVDWEnergyCationAtPosition(posA,type,CurrentCationMolecule);
+			
+			// compute Coulomb energy with cations if no omit of cation-cation or the current molecule is an adsorbate
+			if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationCoulombInteractions))
+				CalculateInterChargeEnergyCationAtPosition(posA,type,&EnergyCationChargeCharge,&EnergyCationChargeBondDipole,CurrentCationMolecule);
+			
+			// update positions and energies
+			EnergyHostVDWFirstBead=EnergyHostVDW;
+			EnergyAdsorbateVDWFirstBead=EnergyAdsorbateVDW;
+			EnergyCationVDWFirstBead=EnergyCationVDW;
+			
+			EnergyHostChargeChargeFirstBead=EnergyHostChargeCharge;
+			EnergyAdsorbateChargeChargeFirstBead=EnergyAdsorbateChargeCharge;
+			EnergyCationChargeChargeFirstBead=EnergyCationChargeCharge;
+			
+			EnergyHostChargeBondDipoleFirstBead=EnergyHostChargeBondDipole;
+			EnergyAdsorbateChargeBondDipoleFirstBead=EnergyAdsorbateChargeBondDipole;
+			EnergyCationChargeBondDipoleFirstBead=EnergyCationChargeBondDipole;
+			
+			EnergyHostBondDipoleBondDipoleFirstBead=0.0;
+			EnergyAdsorbateBondDipoleBondDipoleFirstBead=0.0;
+			EnergyCationBondDipoleBondDipoleFirstBead=0.0;
+			
+			GridIndex=ConvertXYZPositionToGridIndex(posA);
+			
+			//Caculate Rosenbluth factor for the first bead
+			RosenBluthFactorFirstBead=(SumVDWGridRosenbluth[type]/(REAL)(EBCBMCVolume))*exp(-Beta[CurrentSystem]*(EnergyHostVDW+EnergyAdsorbateVDW+EnergyCationVDW-VDWGrid[type][GridIndex.x][GridIndex.y][GridIndex.z][0]));
+		}
+		else {
 
-    posA=Trial[i];
-    start=Components[CurrentComponent].StartingBead;
-    type=Components[CurrentComponent].Type[start];
+			EnergyHostVDWFirstBead=0;
+			EnergyAdsorbateVDWFirstBead=0;
+			EnergyCationVDWFirstBead=0;
+			
+			EnergyHostChargeChargeFirstBead=0;
+			EnergyAdsorbateChargeChargeFirstBead=0;
+			EnergyCationChargeChargeFirstBead=0;
+			
+			EnergyHostChargeBondDipoleFirstBead=0;
+			EnergyAdsorbateChargeBondDipoleFirstBead=0;
+			EnergyCationChargeBondDipoleFirstBead=0;
+			
+			EnergyHostBondDipoleBondDipoleFirstBead=0.0;
+			EnergyAdsorbateBondDipoleBondDipoleFirstBead=0.0;
+			EnergyCationBondDipoleBondDipoleFirstBead=0.0;
+			
+			// calculate energies
+			EnergyHostVDW=CalculateFrameworkVDWEnergyAtPosition(posA,type);
+			
+			//Caculate Rosenbluth factor for the first bead
+			RosenBluthFactorFirstBead=(SumVDWGridRosenbluth[type]/(REAL)(EBCBMCVolume))*exp(-Beta[CurrentSystem]*(-EnergyHostVDW));
+			
+		}
+	}
+	else {
+		
+	for(i=0;i<NumberOfFirstPositions;i++)
+	{
+		if((i==0)&&(Code!=1))
+		  Trial[i]=FirstBeadPosition;
+		else
+		{
+		  FirstBeadPosition.x=FirstBeadPosition.y=FirstBeadPosition.z=0.0;
+		  if(Components[CurrentComponent].RestrictMoves)
+		  {
+			// generate random fractional point between 0.0 and 1.0 and retry when it is not inside the specified range
+			s.x=s.y=s.z=0.0;
+			do
+			{
+			  switch(Dimension)
+			  {
+				case 3:
+				  s.z=RandomNumber();
+				case 2:
+				  s.y=RandomNumber();
+				case 1:
+				  s.x=RandomNumber();
+				  break;
+			  }
 
-    EnergyHostVDW=EnergyAdsorbateVDW=EnergyCationVDW=0.0;
-    EnergyHostChargeCharge=EnergyAdsorbateChargeCharge=EnergyCationChargeCharge=0.0;
-    EnergyHostChargeBondDipole=EnergyAdsorbateChargeBondDipole=EnergyCationChargeBondDipole=0.0;
+			  // convert to a the Cartesian position in the simulation box
+			  FirstBeadPosition.x=Box[CurrentSystem].ax*s.x+Box[CurrentSystem].bx*s.y+Box[CurrentSystem].cx*s.z;
+			  FirstBeadPosition.y=Box[CurrentSystem].ay*s.x+Box[CurrentSystem].by*s.y+Box[CurrentSystem].cy*s.z;
+			  FirstBeadPosition.z=Box[CurrentSystem].az*s.x+Box[CurrentSystem].bz*s.y+Box[CurrentSystem].cz*s.z;
+			} while(!ValidCartesianPoint(CurrentComponent,FirstBeadPosition));
+		  }
+		  else
+		  {
+			// generate random fractional point between 0 and 1
+			s.x=s.y=s.z=0.0;
+			switch(Dimension)
+			{
+			  case 3:
+				s.z=RandomNumber();
+			  case 2:
+				s.y=RandomNumber();
+			  case 1:
+				s.x=RandomNumber();
+				break;
+			}
+			FirstBeadPosition=ConvertFromABCtoXYZ(s);
+		  }
+		  Trial[i]=FirstBeadPosition;
+		}
 
-    // calculate energies
-    EnergyHostVDW=CalculateFrameworkVDWEnergyAtPosition(posA,type);
-    CalculateFrameworkChargeEnergyAtPosition(posA,type,&EnergyHostChargeCharge,&EnergyHostChargeBondDipole);
+		posA=Trial[i];
+		start=Components[CurrentComponent].StartingBead;
+		type=Components[CurrentComponent].Type[start];
 
-    // compute VDW energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
-    if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateVDWInteractions))
-      EnergyAdsorbateVDW=CalculateInterVDWEnergyAdsorbateAtPosition(posA,type,CurrentAdsorbateMolecule);
+		EnergyHostVDW=EnergyAdsorbateVDW=EnergyCationVDW=0.0;
+		EnergyHostChargeCharge=EnergyAdsorbateChargeCharge=EnergyCationChargeCharge=0.0;
+		EnergyHostChargeBondDipole=EnergyAdsorbateChargeBondDipole=EnergyCationChargeBondDipole=0.0;
 
-    // compute Coulomb energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
-    if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateCoulombInteractions))
-      CalculateInterChargeEnergyAdsorbateAtPosition(posA,type,&EnergyAdsorbateChargeCharge,&EnergyAdsorbateChargeBondDipole,CurrentAdsorbateMolecule);
+		//Check to see if point is in accessible part of the grid, if not continue on, where Testpoint >0.5 indicates overlap
+		Testpoint = 0;
+		if (UseDelaunayGrid) 
+		{
+			Testpoint = InterpolateDelaunayGrid(type, posA);
+		}
+		if (UseDynamicGrid && Testpoint < 0.5) {
+			Testpoint = InterpolateDynamicGrid(posA);
+			if (Testpoint == Adsorbates[CurrentSystem][CurrentAdsorbateMolecule].Grid)
+			{
+				Testpoint = 0;
+			}
+		}
+		if (Testpoint > 0.5) {
+			EnergyHostVDW = EnergyOverlapCriteria;
+		}
+		else {
+			
+			// calculate energies
+			EnergyHostVDW=CalculateFrameworkVDWEnergyAtPosition(posA,type);
+			CalculateFrameworkChargeEnergyAtPosition(posA,type,&EnergyHostChargeCharge,&EnergyHostChargeBondDipole);
+			
+			// compute VDW energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
+			if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateVDWInteractions))
+				EnergyAdsorbateVDW=CalculateInterVDWEnergyAdsorbateAtPosition(posA,type,CurrentAdsorbateMolecule);
+			
+			// compute Coulomb energy with adsorbates if no omit of adsorbate-adsorbate or the current molecule is a cation
+			if(Components[CurrentComponent].ExtraFrameworkMolecule||(!OmitAdsorbateAdsorbateCoulombInteractions))
+				CalculateInterChargeEnergyAdsorbateAtPosition(posA,type,&EnergyAdsorbateChargeCharge,&EnergyAdsorbateChargeBondDipole,CurrentAdsorbateMolecule);
+			
+			// compute VDW energy with cations if no omit of cation-cation or the current molecule is an adsorbate
+			if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationVDWInteractions))
+				EnergyCationVDW=CalculateInterVDWEnergyCationAtPosition(posA,type,CurrentCationMolecule);
+			
+			// compute Coulomb energy with cations if no omit of cation-cation or the current molecule is an adsorbate
+			if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationCoulombInteractions))
+				CalculateInterChargeEnergyCationAtPosition(posA,type,&EnergyCationChargeCharge,&EnergyCationChargeBondDipole,CurrentCationMolecule);
+			
+		}
 
-    // compute VDW energy with cations if no omit of cation-cation or the current molecule is an adsorbate
-    if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationVDWInteractions))
-      EnergyCationVDW=CalculateInterVDWEnergyCationAtPosition(posA,type,CurrentCationMolecule);
+		if((EnergyHostVDW>=EnergyOverlapCriteria)||(EnergyHostChargeCharge>=EnergyOverlapCriteria))
+		{
+		  Trover[i]=TRUE;
+		  OVERLAP=OVERLAP&TRUE;
+		}
+		else
+		{
+		  Trover[i]=FALSE;
+		  OVERLAP=OVERLAP&FALSE;
 
-    // compute Coulomb energy with cations if no omit of cation-cation or the current molecule is an adsorbate
-    if((!Components[CurrentComponent].ExtraFrameworkMolecule)||(!OmitCationCationCoulombInteractions))
-      CalculateInterChargeEnergyCationAtPosition(posA,type,&EnergyCationChargeCharge,&EnergyCationChargeBondDipole,CurrentCationMolecule);
+		  EnergiesHostVDW[i]=EnergyHostVDW;
+		  EnergiesAdsorbateVDW[i]=EnergyAdsorbateVDW;
+		  EnergiesCationVDW[i]=EnergyCationVDW;
 
-    if((EnergyHostVDW>=EnergyOverlapCriteria)||(EnergyHostChargeCharge>=EnergyOverlapCriteria))
-    {
-      Trover[i]=TRUE;
-      OVERLAP=OVERLAP&TRUE;
-    }
-    else
-    {
-      Trover[i]=FALSE;
-      OVERLAP=OVERLAP&FALSE;
+		  EnergiesHostChargeCharge[i]=EnergyHostChargeCharge;
+		  EnergiesAdsorbateChargeCharge[i]=EnergyAdsorbateChargeCharge;
+		  EnergiesCationChargeCharge[i]=EnergyCationChargeCharge;
 
-      EnergiesHostVDW[i]=EnergyHostVDW;
-      EnergiesAdsorbateVDW[i]=EnergyAdsorbateVDW;
-      EnergiesCationVDW[i]=EnergyCationVDW;
+		  EnergiesHostChargeBondDipole[i]=EnergyHostChargeBondDipole;
+		  EnergiesAdsorbateChargeBondDipole[i]=EnergyAdsorbateChargeBondDipole;
+		  EnergiesCationChargeBondDipole[i]=EnergyCationChargeBondDipole;
 
-      EnergiesHostChargeCharge[i]=EnergyHostChargeCharge;
-      EnergiesAdsorbateChargeCharge[i]=EnergyAdsorbateChargeCharge;
-      EnergiesCationChargeCharge[i]=EnergyCationChargeCharge;
+		  EnergiesHostBondDipoleBondDipole[i]=0.0;
+		  EnergiesAdsorbateBondDipoleBondDipole[i]=0.0;
+		  EnergiesCationBondDipoleBondDipole[i]=0.0;
 
-      EnergiesHostChargeBondDipole[i]=EnergyHostChargeBondDipole;
-      EnergiesAdsorbateChargeBondDipole[i]=EnergyAdsorbateChargeBondDipole;
-      EnergiesCationChargeBondDipole[i]=EnergyCationChargeBondDipole;
+		  if(BiasingMethod==LJ_BIASING)
+			Bfac[i]=-Beta[CurrentSystem]*(EnergyHostVDW+EnergyAdsorbateVDW+EnergyCationVDW);
+		  else
+		  {
+			Bfac[i]=-Beta[CurrentSystem]*(EnergyHostVDW+EnergyCationVDW+EnergyAdsorbateVDW+
+						   EnergyHostChargeCharge+EnergyAdsorbateChargeCharge+EnergyCationChargeCharge+
+						   EnergyHostChargeBondDipole+EnergyAdsorbateChargeBondDipole+EnergyCationChargeBondDipole);
+		  }
+		}
+	  }
+	  if (OVERLAP) return 0;  // return when all trial-positions overlap
 
-      EnergiesHostBondDipoleBondDipole[i]=0.0;
-      EnergiesAdsorbateBondDipoleBondDipole[i]=0.0;
-      EnergiesCationBondDipoleBondDipole[i]=0.0;
+	  i=0;
+	  RosenBluthFactorFirstBead=ComputeSumRosenbluthWeight(Bfac,Trover,NumberOfFirstPositions);
+	  if(Code==1)
+	  {
+		i=SelectTrialPosition(Bfac,Trover,NumberOfFirstPositions);
+		ERR=RosenBluthFactorFirstBead-exp(Bfac[i]);
+	  }
+	  else if(Code==4)
+	  {
+		i=0;
+		RosenBluthFactorFirstBead+=ERR;
+	  }
 
-      if(BiasingMethod==LJ_BIASING)
-        Bfac[i]=-Beta[CurrentSystem]*(EnergyHostVDW+EnergyAdsorbateVDW+EnergyCationVDW);
-      else
-      {
-        Bfac[i]=-Beta[CurrentSystem]*(EnergyHostVDW+EnergyCationVDW+EnergyAdsorbateVDW+
-                       EnergyHostChargeCharge+EnergyAdsorbateChargeCharge+EnergyCationChargeCharge+
-                       EnergyHostChargeBondDipole+EnergyAdsorbateChargeBondDipole+EnergyCationChargeBondDipole);
-      }
-    }
-  }
-  if (OVERLAP) return 0;  // return when all trial-positions overlap
+	  // update positions and energies
+	  FirstBeadPosition=Trial[i];
 
-  i=0;
-  RosenBluthFactorFirstBead=ComputeSumRosenbluthWeight(Bfac,Trover,NumberOfFirstPositions);
-  if(Code==1)
-  {
-    i=SelectTrialPosition(Bfac,Trover,NumberOfFirstPositions);
-    ERR=RosenBluthFactorFirstBead-exp(Bfac[i]);
-  }
-  else if(Code==4)
-  {
-    i=0;
-    RosenBluthFactorFirstBead+=ERR;
-  }
+	  EnergyHostVDWFirstBead=EnergiesHostVDW[i];
+	  EnergyAdsorbateVDWFirstBead=EnergiesAdsorbateVDW[i];
+	  EnergyCationVDWFirstBead=EnergiesCationVDW[i];
 
-  // update positions and energies
-  FirstBeadPosition=Trial[i];
+	  EnergyHostChargeChargeFirstBead=EnergiesHostChargeCharge[i];
+	  EnergyAdsorbateChargeChargeFirstBead=EnergiesAdsorbateChargeCharge[i];
+	  EnergyCationChargeChargeFirstBead=EnergiesCationChargeCharge[i];
 
-  EnergyHostVDWFirstBead=EnergiesHostVDW[i];
-  EnergyAdsorbateVDWFirstBead=EnergiesAdsorbateVDW[i];
-  EnergyCationVDWFirstBead=EnergiesCationVDW[i];
+	  EnergyHostChargeBondDipoleFirstBead=EnergiesHostChargeBondDipole[i];
+	  EnergyAdsorbateChargeBondDipoleFirstBead=EnergiesAdsorbateChargeBondDipole[i];
+	  EnergyCationChargeBondDipoleFirstBead=EnergiesCationChargeBondDipole[i];
 
-  EnergyHostChargeChargeFirstBead=EnergiesHostChargeCharge[i];
-  EnergyAdsorbateChargeChargeFirstBead=EnergiesAdsorbateChargeCharge[i];
-  EnergyCationChargeChargeFirstBead=EnergiesCationChargeCharge[i];
+	  EnergyHostBondDipoleBondDipoleFirstBead=0.0;
+	  EnergyAdsorbateBondDipoleBondDipoleFirstBead=0.0;
+	  EnergyCationBondDipoleBondDipoleFirstBead=0.0;
 
-  EnergyHostChargeBondDipoleFirstBead=EnergiesHostChargeBondDipole[i];
-  EnergyAdsorbateChargeBondDipoleFirstBead=EnergiesAdsorbateChargeBondDipole[i];
-  EnergyCationChargeBondDipoleFirstBead=EnergiesCationChargeBondDipole[i];
+	  if (Code!=2) RosenBluthFactorFirstBead/=(REAL)NumberOfTrialPositionsForTheFirstBead;
 
-  EnergyHostBondDipoleBondDipoleFirstBead=0.0;
-  EnergyAdsorbateBondDipoleBondDipoleFirstBead=0.0;
-  EnergyCationBondDipoleBondDipoleFirstBead=0.0;
-
-  if (Code!=2) RosenBluthFactorFirstBead/=(REAL)NumberOfTrialPositionsForTheFirstBead;
-
-  // check if the Rosenbluth factor is reasonable; only for a new configuration
-  if ((Code==1)&&(RosenBluthFactorFirstBead<MinimumRosenbluthFactor)) OVERLAP=TRUE;
-
+	  // check if the Rosenbluth factor is reasonable; only for a new configuration
+	  if ((Code==1)&&(RosenBluthFactorFirstBead<MinimumRosenbluthFactor)) OVERLAP=TRUE;
+	}
   return 0;
 }
 
@@ -1115,8 +1332,23 @@ int ComputeExternalEnergies(void)
         EnergyAdsorbateVDW=EnergyAdsorbateChargeCharge=EnergyAdsorbateChargeBondDipole=EnergyAdsorbateBondDipoleBondDipole=0.0;
         EnergyCationVDW=EnergyCationChargeCharge=EnergyCationChargeBondDipole=EnergyCationBondDipoleBondDipole=0.0;
 
+		//Check to see if point is in accessible part of the grid, if not continue on
+		Testpoint = 0;
+		  
+		if (UseDynamicGrid) {
+			Testpoint = InterpolateDynamicGrid(posA);
+			if (Testpoint == Adsorbates[CurrentSystem][CurrentAdsorbateMolecule].Grid)
+				Testpoint = 0;
+		}
+		if (Testpoint > 0.5) {
+			EnergyHostVDW = EnergyOverlapCriteria;
+			TRIAL_OVERLAP=TRUE;
+			break;
+		}
+		    
         // Calculate External energy
         EnergyHostVDW=CalculateFrameworkVDWEnergyAtPosition(posAVDW,type);
+		  
         if(EnergyHostVDW>=EnergyOverlapCriteria)
         {
           TRIAL_OVERLAP=TRUE;
@@ -1458,8 +1690,7 @@ int GenerateTrialOrientationsSimpleSphere(int Old)
           cord[j].z=Components[CurrentComponent].Positions[atom_nr].z-Components[CurrentComponent].Positions[CurrentBead].z;
         }
 
-        RandomArrayRotationMatrix(cord,Components[CurrentComponent].Groups[CurrentGroup].NumberOfGroupAtoms);
-        //RotationAroundXYZAxis(vec,cord,Components[CurrentComponent].Groups[CurrentGroup].NumberOfGroupAtoms,(2.0*RandomNumber()-1.0)*M_PI);
+        RotationAroundXYZAxis(vec,cord,Components[CurrentComponent].Groups[CurrentGroup].NumberOfGroupAtoms,(2.0*RandomNumber()-1.0)*M_PI);
 
         for(j=0;j<Components[CurrentComponent].Groups[CurrentGroup].NumberOfGroupAtoms;j++)
         {
@@ -2692,7 +2923,7 @@ int Rosen(void)
     iwalk=SelectTrialPosition(Bfac,Trover,NumberOfTrialPositions);
 
     RosenbluthNew*=weight*RosenbluthTorsion[iwalk];
-
+	  
     if(RosenbluthNew<MinimumRosenbluthFactor)
     {
       OVERLAP=TRUE;
@@ -2988,10 +3219,10 @@ REAL GrowMolecule(int Iicode)
       FirstBeadPosition=NewPosition[CurrentSystem][start];
     HandleFirstBead(Iicode);
     RosenbluthNew=RosenBluthFactorFirstBead;
+
     if(OVERLAP) return 0;
 
-
-    UCationVDWNew[CurrentSystem]=EnergyCationVDWFirstBead;
+	UCationVDWNew[CurrentSystem]=EnergyCationVDWFirstBead;
     UAdsorbateVDWNew[CurrentSystem]=EnergyAdsorbateVDWFirstBead;
     UHostVDWNew[CurrentSystem]=EnergyHostVDWFirstBead;
 

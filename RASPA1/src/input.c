@@ -212,7 +212,13 @@ int ReadInputFile(char *inputfilename)
   UseReducedUnits=FALSE;
   Dimension=3;
 
+  EBCBMC=FALSE;
+  UseEBCBMCEnergyFirstBead=TRUE;
+  HermiteInterpolation=FALSE;
+  NumberOfEBCBMCBins=10000;
   UseTabularGrid=FALSE;
+  UseDynamicGrid=FALSE;
+  UseDelaunayGrid=FALSE;
   Swapable=FALSE;
   Type=0;
   MaxNumberOfBeads=0;
@@ -243,17 +249,6 @@ int ReadInputFile(char *inputfilename)
   MaxRangeDistanceHistogram=12.0;
 
   WriteVTKGrids=FALSE;
-  DensityAveragingTypeVTK=VTK_FULL_BOX;
-  FreeEnergyAveragingTypeVTK=VTK_FULL_BOX;
-  AverageDensityOverUnitCellsVTK=TRUE;
-  VTKFractionalFrameworkAtomsMin.x=VTKFractionalFrameworkAtomsMin.y=VTKFractionalFrameworkAtomsMin.z=-0.001;
-  VTKFractionalFrameworkAtomsMax.x=VTKFractionalFrameworkAtomsMax.y=VTKFractionalFrameworkAtomsMax.z=1.001;
-  VTKFractionalFrameworkBondsMin.x=VTKFractionalFrameworkBondsMin.y=VTKFractionalFrameworkBondsMin.z=-0.151;
-  VTKFractionalFrameworkBondsMax.x=VTKFractionalFrameworkBondsMax.y=VTKFractionalFrameworkBondsMax.z=1.151;
-  VTKFractionalAdsorbateComMin.x=VTKFractionalAdsorbateComMin.y=VTKFractionalAdsorbateComMin.z=-0.101;
-  VTKFractionalAdsorbateComMax.x=VTKFractionalAdsorbateComMax.y=VTKFractionalAdsorbateComMax.z=1.101;
-  VTKFractionalCationComMin.x=VTKFractionalCationComMin.y=VTKFractionalCationComMin.z=-0.101;
-  VTKFractionalCationComMax.x=VTKFractionalCationComMax.y=VTKFractionalCationComMax.z=1.101;
 
   MovieScale=1.0;
 
@@ -371,9 +366,11 @@ int ReadInputFile(char *inputfilename)
   ParallelMolFractionComponentA=0;
   ParallelMolFractionComponentB=1;
 
-  // default values for the spacing in Angstrom of grid points
-  SpacingVDWGrid=0.15;
-  SpacingCoulombGrid=0.15;
+	// default values for the spacing in Angstrom of grid points
+	SpacingVDWGrid=0.15;
+	SpacingCoulombGrid=0.15;
+	SpacingDelaunayGrid=0.15;
+	SpacingDynamicGrid=0.15;
 
   AsymmetricIons=FALSE;
   CorrectNetChargeOnPseudoAtom=-1;
@@ -682,6 +679,7 @@ int ReadInputFile(char *inputfilename)
   }
 
   UnitCellSize=(VECTOR*)calloc(NumberOfSystems,sizeof(VECTOR));
+  DelaunayUnitCellSize = (VECTOR*)calloc(NumberOfSystems,sizeof(VECTOR));
   NumberOfUnitCells=(INT_VECTOR3*)calloc(NumberOfSystems,sizeof(INT_VECTOR3));
   UnitCellBox=(REAL_MATRIX3x3*)calloc(NumberOfSystems,sizeof(REAL_MATRIX3x3));
   InverseUnitCellBox=(REAL_MATRIX3x3*)calloc(NumberOfSystems,sizeof(REAL_MATRIX3x3));
@@ -716,6 +714,7 @@ int ReadInputFile(char *inputfilename)
 
   MaxNumberOfAdsorbateMolecules=(int*)calloc(NumberOfSystems,sizeof(int));
   NumberOfAdsorbateMolecules=(int*)calloc(NumberOfSystems,sizeof(int));
+  TotalAdsorbateMoleculesAdded=(int*)calloc(NumberOfSystems,sizeof(int));
 
   MaxNumberOfCationMolecules=(int*)calloc(NumberOfSystems,sizeof(int));
   NumberOfCationMolecules=(int*)calloc(NumberOfSystems,sizeof(int));
@@ -1957,15 +1956,12 @@ int ReadInputFile(char *inputfilename)
       switch(Dimension)
       {
         case 2:
-          sscanf(arguments,"%lf",&GammaAngle[CurrentSystem]);
+          sscanf(arguments,"%lf %lf",&AlphaAngle[CurrentSystem],&BetaAngle[CurrentSystem]);
           break;
         case 3:
           sscanf(arguments,"%lf %lf %lf",&AlphaAngle[CurrentSystem],&BetaAngle[CurrentSystem],&GammaAngle[CurrentSystem]);
           break;
       }
-      AlphaAngle[CurrentSystem]*=M_PI/180.0;
-      BetaAngle[CurrentSystem]*=M_PI/180.0;
-      GammaAngle[CurrentSystem]*=M_PI/180.0;
       InitializeBox[CurrentSystem]=TRUE;
     }
 
@@ -2834,16 +2830,6 @@ int ReadInputFile(char *inputfilename)
     if(strcasecmp("WriteDensityProfile3DVTKGridEvery",keyword)==0) sscanf(arguments,"%d",&WriteDensityProfile3DVTKGridEvery[CurrentSystem]);
     if(strcasecmp("DensityProfile3DVTKGridPoints",keyword)==0) 
       sscanf(arguments,"%d %d %d",&DensityProfile3DVTKGridPoints.x,&DensityProfile3DVTKGridPoints.y,&DensityProfile3DVTKGridPoints.z);
-    if(strcasecmp("DensityAveragingTypeVTK",keyword)==0) 
-    {
-      if((strcasecmp("unit_cell",firstargument)==0)||(strcasecmp("UnitCell",firstargument)==0)) DensityAveragingTypeVTK=VTK_UNIT_CELL;
-      if((strcasecmp("full_box",firstargument)==0)||(strcasecmp("FullBox",firstargument)==0)) DensityAveragingTypeVTK=VTK_FULL_BOX;
-    }
-    if(strcasecmp("AverageDensityOverUnitCellsVTK",keyword)==0) 
-    {
-      if(strcasecmp("yes",firstargument)==0) AverageDensityOverUnitCellsVTK=TRUE;
-      if(strcasecmp("no",firstargument)==0) AverageDensityOverUnitCellsVTK=FALSE;
-    }
 
     // samples the cation sites and adsorption sites
     if(strcasecmp("ComputeCationAndAdsorptionSites",keyword)==0)
@@ -2955,34 +2941,18 @@ int ReadInputFile(char *inputfilename)
       if(strcasecmp("no",firstargument)==0) WriteVTKGrids=FALSE;
     }
 
-    if(strcasecmp("VTKFractionalFrameworkAtomsMin",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalFrameworkAtomsMin.x,&VTKFractionalFrameworkAtomsMin.y,&VTKFractionalFrameworkAtomsMin.z);
-    if(strcasecmp("VTKFractionalFrameworkAtomsMax",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalFrameworkAtomsMax.x,&VTKFractionalFrameworkAtomsMax.y,&VTKFractionalFrameworkAtomsMax.z);
-    if(strcasecmp("VTKFractionalFrameworkBondsMin",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalFrameworkBondsMin.x,&VTKFractionalFrameworkBondsMin.y,&VTKFractionalFrameworkBondsMin.z);
-    if(strcasecmp("VTKFractionalFrameworkBondsMax",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalFrameworkBondsMax.x,&VTKFractionalFrameworkBondsMax.y,&VTKFractionalFrameworkBondsMax.z);
-    if(strcasecmp("VTKFractionalAdsorbateMin",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalAdsorbateComMin.x,&VTKFractionalAdsorbateComMin.y,&VTKFractionalAdsorbateComMin.z);
-    if(strcasecmp("VTKFractionalAdsorbateMax",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalAdsorbateComMax.x,&VTKFractionalAdsorbateComMax.y,&VTKFractionalAdsorbateComMax.z);
-    if(strcasecmp("VTKFractionalCationMin",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalCationComMin.x,&VTKFractionalCationComMin.y,&VTKFractionalCationComMin.z);
-    if(strcasecmp("VTKFractionalCationMax",keyword)==0)
-         sscanf(arguments,"%lf %lf %lf",&VTKFractionalCationComMax.x,&VTKFractionalCationComMax.y,&VTKFractionalCationComMax.z);
-    if(strcasecmp("FreeEnergyAveragingTypeVTK",keyword)==0) 
-    {
-      if((strcasecmp("unit_cell",firstargument)==0)||(strcasecmp("UnitCell",firstargument)==0)) FreeEnergyAveragingTypeVTK=VTK_UNIT_CELL;
-      if((strcasecmp("full_box",firstargument)==0)||(strcasecmp("FullBox",firstargument)==0)) FreeEnergyAveragingTypeVTK=VTK_FULL_BOX;
-    }
-
-    // read energy/force grid options
-    if(strcasecmp("UseTabularGrid",keyword)==0) 
-      if((strcasecmp(firstargument,"yes")==0)&&(SimulationType!=MAKE_GRID)) UseTabularGrid=TRUE;
-    if(strcasecmp("SpacingVDWGrid",keyword)==0) sscanf(arguments,"%lf",&SpacingVDWGrid);
-    if(strcasecmp("SpacingCoulombGrid",keyword)==0) sscanf(arguments,"%lf",&SpacingCoulombGrid);
-    if(strcasecmp("NumberOfGrids",keyword)==0)
+	  // read energy/force grid options
+	  if(strcasecmp("UseTabularGrid",keyword)==0) 
+		  if((strcasecmp(firstargument,"yes")==0)&&(SimulationType!=MAKE_GRID)) UseTabularGrid=TRUE;
+	  if(strcasecmp("UseDynamicGrid",keyword)==0) 
+		  if((strcasecmp(firstargument,"yes")==0)&&(SimulationType!=MAKE_GRID)) UseDynamicGrid=TRUE;
+	  if(strcasecmp("UseDelaunayGrid",keyword)==0) 
+		  if((strcasecmp(firstargument,"yes")==0)&&(SimulationType!=MAKE_GRID)) UseDelaunayGrid=TRUE;
+	  if(strcasecmp("SpacingVDWGrid",keyword)==0) sscanf(arguments,"%lf",&SpacingVDWGrid);
+	  if(strcasecmp("SpacingDelaunayGrid",keyword)==0) sscanf(arguments,"%lf",&SpacingDelaunayGrid);
+	  if(strcasecmp("SpacingDynamicGrid",keyword)==0) sscanf(arguments,"%lf",&SpacingDynamicGrid);
+	  if(strcasecmp("SpacingCoulombGrid",keyword)==0) sscanf(arguments,"%lf",&SpacingCoulombGrid);
+	  if(strcasecmp("NumberOfGrids",keyword)==0)
     {
       sscanf(arguments,"%d",&NumberOfGrids);
       GridTypeListName=(char(*)[256])calloc(NumberOfGrids,sizeof(char[256]));
@@ -3014,10 +2984,27 @@ int ReadInputFile(char *inputfilename)
     {
       GridSeeds=realloc(GridSeeds,(NumberOfGridSeeds+1)*sizeof(VECTOR));
       sscanf(arguments,"%lf %lf %lf",&GridSeeds[NumberOfGridSeeds].x,&GridSeeds[NumberOfGridSeeds].y,&GridSeeds[NumberOfGridSeeds].z);
-      NumberOfGridSeeds++;
+		NumberOfGridSeeds++;
     }
-
-    // read method of minimization
+	  
+	  if(strcasecmp("UseDelaunayPolyhedraFile",keyword)==0)
+	  {
+		  if(sscanf(arguments,"%s %[^\n]",keyword,arguments)>0)
+		  {
+			  if(strcasecmp("yes",keyword)==0) DelaunayPolyhedraFile=TRUE;
+			  if(strcasecmp("no",keyword)==0) DelaunayPolyhedraFile=FALSE;
+		  }
+	  }
+	  
+	  if(strcasecmp("DelaunayPolyhedraFileName",keyword)==0)
+	  {
+		  if(sscanf(arguments,"%s %[^\n]",keyword,arguments)>0)
+		  {
+			  strcpy(DelaunayPolyhedraFileName,keyword);
+		  }
+	  }
+	  
+	  // read method of minimization
     if(strcasecmp("MinimizationMethod",keyword)==0) 
     {
       if(strcasecmp("SteepestDescent",firstargument)==0) MinimizationMethod=STEEPEST_DESCENT_MINIMIZATION;
@@ -4040,7 +4027,21 @@ int ReadInputFile(char *inputfilename)
     if(strcasecmp("TargetAccRatioTranslation",keyword)==0) sscanf(arguments,"%lf",&TargetAccRatioTranslation);
     if(strcasecmp("EnergyOverlapCriteria",keyword)==0) sscanf(arguments,"%lf",&EnergyOverlapCriteria);
     if(strcasecmp("MinimumRosenbluthFactor",keyword)==0) sscanf(arguments,"%lf",&MinimumRosenbluthFactor);
-
+	if(strcasecmp("EBCBMC",keyword)==0)
+	{
+		if(strcasecmp("yes",firstargument)==0) EBCBMC=TRUE;
+		if(strcasecmp("no",firstargument)==0) EBCBMC=FALSE;
+	}
+	if(strcasecmp("UseFirstBeadEnergy",keyword)==0)
+	  {
+		  if(strcasecmp("yes",firstargument)==0) UseEBCBMCEnergyFirstBead=TRUE;
+		  if(strcasecmp("no",firstargument)==0) UseEBCBMCEnergyFirstBead=FALSE;
+	  }	  
+	if(strcasecmp("HermiteInterpolation",keyword)==0)
+	{
+		  if(strcasecmp("yes",firstargument)==0) HermiteInterpolation=TRUE;
+		  if(strcasecmp("no",firstargument)==0) HermiteInterpolation=FALSE;
+	}
 
     // transition state theory settings
     if(strcasecmp("FreeEnergyMappingType",keyword)==0) 
@@ -5173,32 +5174,29 @@ int ReadInputFile(char *inputfilename)
   }
 
   InitializeEwald(EwaldPrecision,EwaldAutomatic);
-  AllocateEwaldMemory();
-
-  if(Framework[0].FrameworkModel==GRID)
-  {
-    CurrentSystem=0;
-    ReadVDWGrid();
-    if(ChargeMethod!=NONE)
-      ReadCoulombGrid();
-
-    if(BlockEnergyGrids)
-      BlockingVDWGrid(); 
-  }
-
-  for(CurrentSystem=0;CurrentSystem<NumberOfSystems;CurrentSystem++)
-  {
-    if(Ensemble[CurrentSystem]==NPTPR) BoundaryCondition[CurrentSystem]=TRICLINIC;
-    if(ProbabilityBoxShapeChangeMove>0.0) BoundaryCondition[CurrentSystem]=TRICLINIC;
-  }
-
-  // if the boundary-condition is still not set, let it default to 'triclinic'
-  for(i=0;i<NumberOfSystems;i++)
-  {
-    if(BoundaryCondition[i]==UNINITIALIZED_BOUNDARY_CONDITION)
-      BoundaryCondition[i]=TRICLINIC;
-  }
-
+	AllocateEwaldMemory();
+	
+	if (UseDynamicGrid) 
+		MakeDynamicGrid();
+	
+	if(Framework[0].FrameworkModel==GRID)
+	{
+		CurrentSystem=0;
+		ReadVDWGrid();
+		if(UseDelaunayGrid)
+			ReadDelaunayGrid();  
+		
+		if(ChargeMethod!=NONE)
+			ReadCoulombGrid();
+		
+		if(BlockEnergyGrids)
+			BlockingVDWGrid();
+		
+		if (EBCBMC) {
+			CreateEBCBMCProbBins();
+		}
+		
+	}
 
   if(Restart)
   {
@@ -5253,17 +5251,27 @@ int ReadInputFile(char *inputfilename)
   // compute the Inertia-tensors and quaternions for all rigid molecules
   ComputeQuaternions();
 
-  for(CurrentSystem=0;CurrentSystem<NumberOfSystems;CurrentSystem++)
-  {
-    // compute the intial center-of-mass position
-    Framework[CurrentSystem].IntialCenterOfMassPosition=GetFrameworkCenterOfMass();
-    IntialCenterOfMassPosition[CurrentSystem]=GetCenterOfMassCurrentSystem();
-  }
-
   CheckConfigMoves();
 
   for(CurrentSystem=0;CurrentSystem<NumberOfSystems;CurrentSystem++)
+  {
     PrintRestartFile();
+
+    // compute the intial center-of-mass position
+    Framework[CurrentSystem].IntialCenterOfMassPosition=GetFrameworkCenterOfMass();
+
+    IntialCenterOfMassPosition[CurrentSystem]=GetCenterOfMassCurrentSystem();
+
+    if(Ensemble[CurrentSystem]==NPTPR) BoundaryCondition[CurrentSystem]=TRICLINIC;
+    if(ProbabilityBoxShapeChangeMove>0.0) BoundaryCondition[CurrentSystem]=TRICLINIC;
+  }
+
+  // if the boundary-condition is still not set, let it default to 'triclinic'
+  for(i=0;i<NumberOfSystems;i++)
+  {
+    if(BoundaryCondition[i]==UNINITIALIZED_BOUNDARY_CONDITION)
+      BoundaryCondition[i]=TRICLINIC;
+  }
 
   for(i=0;i<NumberOfSystems;i++)
     WriteVTK(i);
@@ -6955,17 +6963,6 @@ void ReadRestartFile(void)
       strcpy(keyword,"keyword");
       sscanf(line,"%s %[^\n]",keyword,arguments);
 
-      if(strcasecmp(keyword,"InitialFrameworkCenterOfMass:")==0)
-      {
-        fgets(line,1024,FilePtrIn);
-        fgets(line,1024,FilePtrIn);
-        sscanf(line,"%lf %lf %lf\n",&temp1,&temp2,&temp3);
-        Framework[CurrentSystem].IntialCenterOfMassPosition.x=temp1;
-        Framework[CurrentSystem].IntialCenterOfMassPosition.y=temp2;
-        Framework[CurrentSystem].IntialCenterOfMassPosition.z=temp3;
-        printf("SET DRIFT: %g %g %g\n",temp1,temp2,temp3);
-      }
-
       if(strcasecmp(keyword,"Box:")==0)
       {
         fgets(line,1024,FilePtrIn);
@@ -6984,6 +6981,8 @@ void ReadRestartFile(void)
         Box[CurrentSystem].az=(REAL)temp1;
         Box[CurrentSystem].bz=(REAL)temp2;
         Box[CurrentSystem].cz=(REAL)temp3;
+
+        printf("BOX: %g %g %g\n",Box[CurrentSystem].ax,Box[CurrentSystem].by,Box[CurrentSystem].cz);
 
         InverseBoxMatrix(&Box[CurrentSystem],&InverseBox[CurrentSystem]);
 

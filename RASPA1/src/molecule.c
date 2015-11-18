@@ -73,6 +73,7 @@ int *NumberOfChargesPerSystem;
 int *NumberOfBondDipolesPerSystem;
 
 int *NumberOfAdsorbateMolecules;
+int *TotalAdsorbateMoleculesAdded;
 int CurrentAdsorbateMolecule;
 ADSORBATE_MOLECULE **Adsorbates;
 
@@ -2312,6 +2313,7 @@ void InsertAdsorbateMolecule(void)
   // update the number of adsorbate molecules
   NumberOfAdsorbateMolecules[CurrentSystem]++;
   Components[CurrentComponent].NumberOfMolecules[CurrentSystem]++;
+  TotalAdsorbateMoleculesAdded[CurrentSystem]++;
 
   // if the number of adsorbate molecules is larger than the currently allocated amount, then reallocate the memory
   // the hard-coded default here is to add the arrays with 50 molecules
@@ -2326,6 +2328,7 @@ void InsertAdsorbateMolecule(void)
   NewMolecule=NumberOfAdsorbateMolecules[CurrentSystem]-1;
   Adsorbates[CurrentSystem][NewMolecule].NumberOfAtoms=nr_atoms;
   Adsorbates[CurrentSystem][NewMolecule].Type=CurrentComponent;
+  Adsorbates[CurrentSystem][NewMolecule].Grid=TotalAdsorbateMoleculesAdded[CurrentSystem];
 
   // allocate the meory for the atoms and groups
   Adsorbates[CurrentSystem][NewMolecule].Atoms=(ATOM*)calloc(nr_atoms,sizeof(ATOM));
@@ -2345,6 +2348,9 @@ void InsertAdsorbateMolecule(void)
     Adsorbates[CurrentSystem][NewMolecule].Atoms[i].Fixed=Components[CurrentComponent].Fixed[i];
     Adsorbates[CurrentSystem][NewMolecule].Atoms[i].Charge=Components[CurrentComponent].Charge[i];
     NumberOfPseudoAtomsType[CurrentSystem][type]++;
+	
+	if (UseDynamicGrid)
+		AdjustDynamicGrid(Adsorbates[CurrentSystem][NewMolecule].Grid, type,NewPosition[CurrentSystem][i]);
   }
 
   // update the center of mass
@@ -2389,6 +2395,13 @@ void RemoveAdsorbateMolecule(void)
 
   // remove the the amount of atoms from the total
   nr_atoms=Components[CurrentComponent].NumberOfAtoms;
+	
+  for(i=0;i<nr_atoms;i++)
+  {
+	if (UseDynamicGrid) 
+		AdjustDynamicGrid(0, Adsorbates[CurrentSystem][CurrentAdsorbateMolecule].Atoms[i].Type,Adsorbates[CurrentSystem][CurrentAdsorbateMolecule].Atoms[i].Position);
+  }
+	
   NumberOfAtomsPerSystem[CurrentSystem]-=nr_atoms;
   NumberOfChargesPerSystem[CurrentSystem]-=Components[CurrentComponent].NumberOfCharges;
   NumberOfBondDipolesPerSystem[CurrentSystem]-=Components[CurrentComponent].NumberOfBondDipoles;
@@ -4939,9 +4952,6 @@ int ValidCartesianPoint(int i, POINT pos)
   int k;
   VECTOR CartesianCenter,s,dr;
   REAL rr;
-
-
-  if(!Components[CurrentComponent].RestrictMoves) return TRUE;
 
   // convert to fractional position between 0 and 1
   s.x=InverseBox[CurrentSystem].ax*pos.x+InverseBox[CurrentSystem].bx*pos.y+InverseBox[CurrentSystem].cx*pos.z;

@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <float.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <math.h>
@@ -185,7 +184,6 @@ void PrintPreSimulationStatusCurrentSystem(int system)
   int A,B,Type,nr_args;
   int nr_free,nr_fixed;
   REAL charge,NetCharge;
-  REAL smallest_charge,largest_charge;
   VECTOR Dipole,eigenvalues;
   REAL_MATRIX3x3 Quadrupole,Eigenvectors;
   char charge_string[256];
@@ -234,11 +232,10 @@ void PrintPreSimulationStatusCurrentSystem(int system)
 
   FilePtr=OutputFilePtr[system];
 
-  fprintf(FilePtr,"Hongda's version of RASPA\n");
   fprintf(FilePtr,"Compiler and run-time data\n");
   fprintf(FilePtr,"===========================================================================\n");
 
-  fprintf(FilePtr,"%s\n","RASPA 0.99-5");
+  fprintf(FilePtr,"%s\n","RASPA 0.99-482");
   
   #if defined (__LP64__) || defined (__64BIT__) || defined (_LP64) || (__WORDSIZE == 64)
     fprintf(FilePtr,"Compiled as a 64-bits application\n");
@@ -1141,19 +1138,7 @@ void PrintPreSimulationStatusCurrentSystem(int system)
   // sampling the 3D histograms of position (i.e. 3D free energy)
   fprintf(FilePtr,"3D density grid for adsorbates: %s\n",ComputeDensityProfile3DVTKGrid[system]?"yes":"no");
   if(ComputeDensityProfile3DVTKGrid[system])
-  {
     fprintf(FilePtr,"\t3D density grids for adsorbates are written to file every %d cycles\n",WriteDensityProfile3DVTKGridEvery[system]);
-    fprintf(FilePtr,"\t3D density grids consisting of %d x %d x %d points\n",DensityProfile3DVTKGridPoints.x,DensityProfile3DVTKGridPoints.y,DensityProfile3DVTKGridPoints.z);
-    if(DensityAveragingTypeVTK==VTK_UNIT_CELL) fprintf(FilePtr,"\t3D density grid output as a single unit cell\n");
-    else fprintf(FilePtr,"\t3D density grid made for the full simulation-cell\n");
-    if(DensityAveragingTypeVTK==VTK_FULL_BOX)
-    {
-      if(AverageDensityOverUnitCellsVTK==TRUE)
-        fprintf(FilePtr,"\t3D density grid averaged over all unit cells\n");
-      else
-        fprintf(FilePtr,"\t3D density grid NOT averaged over all unit cells\n");
-    }
-  }
 
   // samples the cation sites and adsorption sites
   fprintf(FilePtr,"Compute cation an/or adsorption sites: %s\n",ComputeCationAndAdsorptionSites[system]?"yes":"no");
@@ -1167,24 +1152,6 @@ void PrintPreSimulationStatusCurrentSystem(int system)
 
   // samples the stress and pressure
   fprintf(FilePtr,"Compute pressure and stress: %s\n",ComputeMolecularPressure[system]?"yes":"no");
-  fprintf(FilePtr,"\n\n");
-
-  fprintf(FilePtr,"VTK\n");
-  fprintf(FilePtr,"===========================================================================\n");
-  fprintf(FilePtr,"VTK fractional-range position framework atoms: [%lf,%lf] [%lf,%lf] [%lf,%lf]\n",(double)VTKFractionalFrameworkAtomsMin.x,
-          (double)VTKFractionalFrameworkAtomsMax.x,(double)VTKFractionalFrameworkAtomsMin.x,(double)VTKFractionalFrameworkAtomsMax.y,
-          (double)VTKFractionalFrameworkAtomsMin.z,(double)VTKFractionalFrameworkAtomsMax.z);
-  fprintf(FilePtr,"VTK fractional-range position framework bonds: [%lf,%lf] [%lf,%lf] [%lf,%lf]\n",(double)VTKFractionalFrameworkBondsMin.x,
-          (double)VTKFractionalFrameworkBondsMax.x,(double)VTKFractionalFrameworkBondsMin.x,(double)VTKFractionalFrameworkBondsMax.y,
-          (double)VTKFractionalFrameworkBondsMin.z,(double)VTKFractionalFrameworkBondsMax.z);
-  fprintf(FilePtr,"VTK fractional-range com-position adsorbate molecules: [%lf,%lf] [%lf,%lf] [%lf,%lf]\n",(double)VTKFractionalAdsorbateComMin.x,
-          (double)VTKFractionalAdsorbateComMax.x,(double)VTKFractionalAdsorbateComMin.x,(double)VTKFractionalAdsorbateComMax.y,
-          (double)VTKFractionalAdsorbateComMin.z,(double)VTKFractionalAdsorbateComMax.z);
-  fprintf(FilePtr,"VTK fractional-range com-position cation molecules: [%lf,%lf] [%lf,%lf] [%lf,%lf]\n",(double)VTKFractionalCationComMin.x,
-          (double)VTKFractionalCationComMax.x,(double)VTKFractionalCationComMin.x,(double)VTKFractionalCationComMax.y,
-          (double)VTKFractionalCationComMin.z,(double)VTKFractionalCationComMax.z);
-  if(FreeEnergyAveragingTypeVTK==VTK_UNIT_CELL) fprintf(FilePtr,"\t3D free energy grid output as a single unit cell\n");
-  else fprintf(FilePtr,"\t3D free energy grid made for the full simulation-cell\n");
   fprintf(FilePtr,"\n\n");
 
   fprintf(FilePtr,"Thermo/Baro-stat NHC parameters\n");
@@ -3292,25 +3259,25 @@ void PrintPreSimulationStatusCurrentSystem(int system)
                  (double)Components[i].MOL_PER_KG_TO_CC_STP_CC[system]);
       fprintf(FilePtr,"\n");
 
-      fprintf(FilePtr,"\tPartial pressure: %24.14lf [Pa]\n",(double)Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR);
-      fprintf(FilePtr,"\t                  %24.14lf [Torr]\n",(double)
+      fprintf(FilePtr,"\tPartial pressure: %18.10lf [Pa]\n",(double)Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR);
+      fprintf(FilePtr,"\t                  %18.10lf [Torr]\n",(double)
               Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR*PA_TO_TORR);
-      fprintf(FilePtr,"\t                  %24.14lf [bar]\n",(double)
+      fprintf(FilePtr,"\t                  %18.10lf [bar]\n",(double)
               Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR*PA_TO_BAR);
-      fprintf(FilePtr,"\t                  %24.14lf [atm]\n",(double)
+      fprintf(FilePtr,"\t                  %18.10lf [atm]\n",(double)
               Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR*PA_TO_ATM);
       fprintf(FilePtr,"\n");
 
       fprintf(FilePtr,"\tFugacity coefficient: %18.10lf [-]\n",(double)Components[i].FugacityCoefficient[system]);
       fprintf(FilePtr,"\n");
 
-      fprintf(FilePtr,"\tPartial fugacity: %24.14lf [Pa]\n",(double)(Components[i].FugacityCoefficient[system]*
+      fprintf(FilePtr,"\tPartial fugacity: %18.10lf [Pa]\n",(double)(Components[i].FugacityCoefficient[system]*
            Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR));
-      fprintf(FilePtr,"\t                  %24.14lf [Torr]\n",(double)(Components[i].FugacityCoefficient[system]*
+      fprintf(FilePtr,"\t                  %18.10lf [Torr]\n",(double)(Components[i].FugacityCoefficient[system]*
               Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR*PA_TO_TORR));
-      fprintf(FilePtr,"\t                  %24.14lf [bar]\n",(double)(Components[i].FugacityCoefficient[system]*
+      fprintf(FilePtr,"\t                  %18.10lf [bar]\n",(double)(Components[i].FugacityCoefficient[system]*
               Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR*PA_TO_BAR));
-      fprintf(FilePtr,"\t                  %24.14lf [atm]\n",(double)(Components[i].FugacityCoefficient[system]*
+      fprintf(FilePtr,"\t                  %18.10lf [atm]\n",(double)(Components[i].FugacityCoefficient[system]*
               Components[i].PartialPressure[system]*PRESSURE_CONVERSION_FACTOR*PA_TO_ATM));
       fprintf(FilePtr,"\n");
 
@@ -5848,14 +5815,10 @@ void PrintPreSimulationStatusCurrentSystem(int system)
        Framework[system].FrameworkDensityPerComponent[CurrentFramework]));
 
     charge=0.0;
-    smallest_charge=DBL_MAX;
-    largest_charge=-DBL_MAX;
     for(i=0;i<Framework[system].NumberOfAtoms[CurrentFramework];i++)
     {
       Type=Framework[system].Atoms[CurrentFramework][i].Type;
       charge+=Framework[system].Atoms[CurrentFramework][i].Charge;
-      if(Framework[system].Atoms[CurrentFramework][i].Charge>largest_charge) largest_charge=Framework[system].Atoms[CurrentFramework][i].Charge;
-      if(Framework[system].Atoms[CurrentFramework][i].Charge<smallest_charge) smallest_charge=Framework[system].Atoms[CurrentFramework][i].Charge;
     }
 
     if(CorrectNetChargeOnPseudoAtom>=0)
@@ -5863,8 +5826,6 @@ void PrintPreSimulationStatusCurrentSystem(int system)
         CorrectNetChargeOnPseudoAtom,PseudoAtoms[CorrectNetChargeOnPseudoAtom].Name,(double)CorrectNetChargeOnPseudoAtomValue);
 
     fprintf(FilePtr,"Framework has net charge: %lf\n",(double)charge);
-    fprintf(FilePtr,"         largest charge : %lf\n",(double)largest_charge);
-    fprintf(FilePtr,"         smallest charge: %lf\n",(double)smallest_charge);
     fprintf(FilePtr,"\n");
   }
 
@@ -6657,13 +6618,7 @@ void PrintRestartFile(void)
   fprintf(FilePtrOut,"%18.12f %18.12f %18.12f\n",(double)Box[CurrentSystem].ax,(double)Box[CurrentSystem].bx,(double)Box[CurrentSystem].cx);
   fprintf(FilePtrOut,"%18.12f %18.12f %18.12f\n",(double)Box[CurrentSystem].ay,(double)Box[CurrentSystem].by,(double)Box[CurrentSystem].cy);
   fprintf(FilePtrOut,"%18.12f %18.12f %18.12f\n",(double)Box[CurrentSystem].az,(double)Box[CurrentSystem].bz,(double)Box[CurrentSystem].cz);
-  fprintf(FilePtrOut,"\n");
-
-  fprintf(FilePtrOut,"InitialFrameworkCenterOfMass:\n");
-  fprintf(FilePtrOut,"========================================================================\n");
-  fprintf(FilePtrOut,"%18.12f %18.12f %18.12f\n",(double)Framework[CurrentSystem].IntialCenterOfMassPosition.x,
-    (double)Framework[CurrentSystem].IntialCenterOfMassPosition.y,(double)Framework[CurrentSystem].IntialCenterOfMassPosition.z);
-  fprintf(FilePtrOut,"\n");
+  fprintf(FilePtrOut,"\n\n");
 
   fprintf(FilePtrOut,"Maximum changes for MC-moves:\n");
   fprintf(FilePtrOut,"========================================================================\n");
