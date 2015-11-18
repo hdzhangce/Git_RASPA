@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "constants.h"
 #include "cbmc.h"
 #include "simulation.h"
@@ -1436,7 +1437,7 @@ void PrintIntervalStatusInit(long long CurrentCycle,long long NumberOfCycles,FIL
 
   fprintf(FilePtr,"[Init] Current cycle: %lld out of %lld\n",CurrentCycle,NumberOfCycles);
   fprintf(FilePtr,"========================================================================================================\n\n");
-  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/1000);
+  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/CLOCKS_PER_SEC);
   fprintf(FilePtr,"Net charge: %g (F: %g, A: %g, C: %g)\n",NetChargeSystem[CurrentSystem],NetChargeFramework[CurrentSystem],
                                                            NetChargeAdsorbates[CurrentSystem],NetChargeCations[CurrentSystem]);
 
@@ -1609,7 +1610,7 @@ void PrintIntervalStatusEquilibration(long long CurrentCycle,long long NumberOfC
 
   fprintf(FilePtr,"[Init] Current cycle: %lld out of %lld\n",CurrentCycle,NumberOfCycles);
   fprintf(FilePtr,"========================================================================================================\n\n");
-  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/1000);
+  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/CLOCKS_PER_SEC);
   fprintf(FilePtr,"Net charge: %g (F: %g, A: %g, C: %g)\n",NetChargeSystem[CurrentSystem],NetChargeFramework[CurrentSystem],
                                                            NetChargeAdsorbates[CurrentSystem],NetChargeCations[CurrentSystem]);
 
@@ -2342,7 +2343,7 @@ void PrintIntervalStatus(long long CurrentCycle,long long NumberOfCycles, FILE *
 
   fprintf(FilePtr,"Current cycle: %lld out of %lld\n",CurrentCycle,NumberOfCycles);
   fprintf(FilePtr,"========================================================================================================\n\n");
-  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/1000);
+  fprintf(FilePtr,"CPU time spent: %ld [seconds]\n\n", clock()/CLOCKS_PER_SEC);
   if(SimulationType==MOLECULAR_DYNAMICS)
     fprintf(FilePtr,"Time run: %10.6lf [ps] %10.6lf [ns] \n",(double)(DeltaT*(REAL)(double)CurrentCycle),(double)(1e-3*DeltaT*(REAL)(double)CurrentCycle));
 
