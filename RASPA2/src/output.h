@@ -41,7 +41,6 @@ void PrintPreSimulationStatusCurrentSystem(int system);
 void PrintPostSimulationStatus(void);
 
 void PrintEnergyStatus(FILE *FilePtr,char *string);
-void PrintEnergyStatusToStdOut();
 
 void PrintEnergyDriftStatus(FILE *FilePtr);
 

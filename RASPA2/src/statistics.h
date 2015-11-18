@@ -32,17 +32,17 @@
 
 #define NR_BLOCKS 5
 
-extern REAL ***WidomRosenbluthFactorAccumulated;
+extern REAL ***WidomRosenbluthFactorAverage;
 extern REAL ***WidomRosenbluthFactorCount;
 
-extern REAL ***WidomEnergyDifferenceAccumulated;
+extern REAL ***WidomEnergyDifferenceAverage;
 
-extern REAL ***WidomEnergyFrameworkAccumulated;
+extern REAL ***WidomEnergyFrameworkAverage;
 extern REAL ***WidomEnergyFrameworkCount;
 
-extern REAL **SurfaceAreaFrameworkAccumulated;
-extern REAL ***SurfaceAreaFrameworksAccumulated;
-extern REAL **SurfaceAreaCationsAccumulated;
+extern REAL **SurfaceAreaFrameworkAverage;
+extern REAL ***SurfaceAreaFrameworksAverage;
+extern REAL **SurfaceAreaCationsAverage;
 extern REAL **SurfaceAreaCount;
 
 REAL GetAverageWPI(int comp);
@@ -53,7 +53,7 @@ extern int Block;
 
 extern int DensityProfile;
 
-extern VECTOR ***PrincipleMomentsOfInertiaAccumulated;
+extern VECTOR ***PrincipleMomentsOfInertiaAverage;
 extern REAL ***PrincipleMomentsOfInertiaCount;
 
 REAL GetAverageProperty(REAL **Property);

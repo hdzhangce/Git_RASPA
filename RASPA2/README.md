@@ -8,19 +8,15 @@ metal-organic frameworks, carbon nanotubes and external fields.
 Installation
 ============
 
-Like any other software library, RASPA2 should be installed through a package
+Like any other software library, RASPA should be installed through a package
 manager. This can be done through pip.
 
 ```
-pip install RASPA2
+pip install git+https://github.com/numat/RASPA2
 ```
 
-If you want to stay on the cutting edge of RASPA2 development, you can also
-install directly from this git repo with `pip install git+https://github.com/numat/RASPA2`.
-
-If you are unfamiliar with package managers, read the
-[For New Coders](https://github.com/numat/RASPA2/wiki/For-New-Coders)
-section of the RASPA2 [wiki](https://github.com/numat/RASPA2/wiki).
+If you are unfamiliar with package managers, read NuMat's
+[installation wiki](https://github.com/numat/mofgen/wiki/Installation).
 
 Usage
 =====
@@ -40,8 +36,8 @@ long-running simulations. To see the help, type:
 simulate -h
 ```
 
-To write and configure simulation input files, read
-[Docs/raspa.pdf](https://github.com/numat/RASPA2/blob/master/Docs/raspa.pdf).
+To write and configure simulation input files, read the documentation in the
+`doc` folder.
 
 ###Python
 
@@ -80,8 +76,8 @@ libraries such as [open babel](http://openbabel.org/wiki/Main_Page), it is
 possible to completely automate job distribution, cif formatting, charge
 estimation, and more in a single script.
 
-For more examples, read the
-[workflow wiki](https://github.com/numat/RASPA2/wiki/Workflow).
+For more examples, check out the [NuMat workflow tutorial](https://github.com/numat/mofgen/wiki/Workflow)
+or view some [example notebooks](https://github.com/numat/simulation-notebooks).
 
 Accessing Configuration Files
 =============================

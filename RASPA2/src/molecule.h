@@ -541,7 +541,6 @@ typedef struct Component
   REAL ProbabilityFrameworkChangeMove;
   REAL ProbabilityFrameworkShiftMove;
   REAL ProbabilityCFCRXMCLambdaChangeMove;
-  REAL ProbabilityExchangeFractionalParticleMove;
 
   REAL *CpuTimeTranslationMove;
   REAL *CpuTimeRandomTranslationMove;
@@ -562,7 +561,6 @@ typedef struct Component
   REAL *CpuTimeGibbsIdentityChangeMove;
   REAL *CpuTimeCFGibbsChangeMove;
   REAL *CpuTimeCBCFGibbsChangeMove;
-  REAL *CpuTimeExchangeFractionalParticleMove;
 
   int RestrictMovesToBox;
   VECTOR BoxAxisABC_Min,BoxAxisABC_Min2,BoxAxisABC_Min3,BoxAxisABC_Min4;
@@ -607,7 +605,6 @@ typedef struct Component
   REAL FractionOfGibbsIdentityChangeMove;
   REAL FractionOfCFGibbsChangeMove;
   REAL FractionOfCBCFGibbsChangeMove;
-  REAL FractionOfExchangeFractionalParticleMove;
 
   REAL FractionOfParallelTemperingMove;
   REAL FractionOfHyperParallelTemperingMove;

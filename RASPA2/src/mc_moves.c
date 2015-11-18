@@ -369,10 +369,6 @@ static REAL ***CFLambdaHistogram;
 static REAL ***RXMCLambdaHistogram;
 static int **LambdaRetraceMolecules;
 
-
-static REAL **ExchangeFractionalParticleAttempts;
-static REAL **ExchangeFractionalParticleAccepted;
-
 void CheckEnergy(void);
 
 
@@ -399,9 +395,6 @@ void InitializeMCMovesStatisticsAllSystems(void)
 
       RandomTranslationAttempts[j][i]=0.0;
       RandomTranslationAccepted[j][i]=0.0;
-
-      ExchangeFractionalParticleAttempts[j][i]=0.0;
-      ExchangeFractionalParticleAccepted[j][i]=0.0;
 
       RotationAttempts[j][i].x=0.0;
       RotationAttempts[j][i].y=0.0;
@@ -1050,112 +1043,6 @@ int ComputeNewPolarizationEnergy(int New,int excl_ads,int excl_cation)
 
   return 0;
 }
-
-/*********************************************************************************************************
- * Name       | ComputeEnergyOfFractionalMoleculesAdsorbates                                             *
- * ----------------------------------------------------------------------------------------------------- *
- * Function   | Calculates the energy of the fractional adsorbate molecules                              *
- * Parameters | -                                                                                        *
- * Note       |                                                                                          *
- * Used       | in 'statistic.c' to correct the energy for CFMC                                          *
- *********************************************************************************************************/
-
-REAL ComputeEnergyOfFractionalMoleculesAdsorbates()
-{
-  int i;
-  REAL DeltaU;
-  int StoredCurrentComponent;
- 
-  DeltaU=0; 
-  StoredCurrentComponent=CurrentComponent;
-  for(CurrentComponent=0;CurrentComponent<NumberOfComponents;CurrentComponent++)
-  { 
-    if((!Components[CurrentComponent].ExtraFrameworkMolecule) && (Components[CurrentComponent].CFMoleculePresent[CurrentSystem]))
-    {
-      CurrentAdsorbateMolecule=Components[CurrentComponent].FractionalMolecule[CurrentSystem];
-
-      // compute inter-molecular energy differences
-      CalculateInterVDWEnergyDifferenceAdsorbate(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateInterChargeChargeEnergyDifferenceAdsorbate(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateInterChargeBondDipoleEnergyDifferenceAdsorbate(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateInterBondDipoleBondDipoleEnergyDifferenceAdsorbate(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE);
-
-      CalculateFrameworkAdsorbateVDWEnergyDifference(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE,FALSE);
-      CalculateFrameworkAdsorbateChargeChargeEnergyDifference(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE,FALSE);
-      CalculateFrameworkAdsorbateChargeBondDipoleEnergyDifference(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateFrameworkAdsorbateBondDipoleBondDipoleEnergyDifference(CurrentAdsorbateMolecule,CurrentComponent,FALSE,TRUE);
-
-      // compute the energy differenes in Fourier-space
-      if((ChargeMethod==EWALD)&&(!OmitEwaldFourier))
-        CalculateEwaldFourierAdsorbate(FALSE,TRUE,CurrentAdsorbateMolecule,0);
-
-
-      DeltaU+=UHostVDWDelta[CurrentSystem]+UAdsorbateVDWDelta[CurrentSystem]+UCationVDWDelta[CurrentSystem]+
-              UHostChargeChargeRealDelta[CurrentSystem]+UAdsorbateChargeChargeRealDelta[CurrentSystem]+UCationChargeChargeRealDelta[CurrentSystem]+
-              UHostChargeBondDipoleRealDelta[CurrentSystem]+UAdsorbateChargeBondDipoleRealDelta[CurrentSystem]+UCationChargeBondDipoleRealDelta[CurrentSystem]+
-              UHostBondDipoleBondDipoleRealDelta[CurrentSystem]+UAdsorbateBondDipoleBondDipoleRealDelta[CurrentSystem]+UCationBondDipoleBondDipoleRealDelta[CurrentSystem]+
-              UHostAdsorbateChargeChargeFourierDelta[CurrentSystem]+UAdsorbateAdsorbateChargeChargeFourierDelta[CurrentSystem]+UAdsorbateCationChargeChargeFourierDelta[CurrentSystem]+
-              UHostAdsorbateChargeBondDipoleFourierDelta[CurrentSystem]+UAdsorbateAdsorbateChargeBondDipoleFourierDelta[CurrentSystem]+UAdsorbateCationChargeBondDipoleFourierDelta[CurrentSystem]+
-              UHostAdsorbateBondDipoleBondDipoleFourierDelta[CurrentSystem]+UAdsorbateAdsorbateBondDipoleBondDipoleFourierDelta[CurrentSystem]+UAdsorbateCationBondDipoleBondDipoleFourierDelta[CurrentSystem];
-    }
-  }
-  CurrentComponent=StoredCurrentComponent;
-
-  return DeltaU;
-}
-
-/*********************************************************************************************************
- * Name       | ComputeEnergyOfFractionalMoleculesCations                                                *
- * ----------------------------------------------------------------------------------------------------- *
- * Function   | Calculates the energy of the fractional cations molecules                                *
- * Parameters | -                                                                                        *
- * Note       |                                                                                          *
- * Used       | in 'statistic.c' to correct the energy for CFMC                                          *
- *********************************************************************************************************/
-
-REAL ComputeEnergyOfFractionalMoleculesCations()
-{
-  int i;
-  REAL DeltaU;
-  int StoredCurrentComponent;
- 
-  DeltaU=0; 
-  StoredCurrentComponent=CurrentComponent;
-  for(CurrentComponent=0;CurrentComponent<NumberOfComponents;CurrentComponent++)
-  { 
-    if((Components[CurrentComponent].ExtraFrameworkMolecule) && (Components[CurrentComponent].CFMoleculePresent[CurrentSystem]))
-    {
-      CurrentCationMolecule=Components[CurrentComponent].FractionalMolecule[CurrentSystem];
-
-      CalculateInterVDWEnergyDifferenceCation(CurrentCationMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateInterChargeChargeEnergyDifferenceCation(CurrentCationMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateInterChargeBondDipoleEnergyDifferenceCation(CurrentCationMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateInterBondDipoleBondDipoleEnergyDifferenceCation(CurrentCationMolecule,CurrentComponent,FALSE,TRUE);
-
-      // compute energy differences framework-cation
-      CalculateFrameworkCationVDWEnergyDifference(CurrentCationMolecule,CurrentComponent,FALSE,TRUE,FALSE);
-      CalculateFrameworkCationChargeChargeEnergyDifference(CurrentCationMolecule,CurrentComponent,FALSE,TRUE,FALSE);
-      CalculateFrameworkCationChargeBondDipoleEnergyDifference(CurrentCationMolecule,CurrentComponent,FALSE,TRUE);
-      CalculateFrameworkCationBondDipoleBondDipoleEnergyDifference(CurrentCationMolecule,CurrentComponent,FALSE,TRUE);
-
-      // compute the energy differenes in Fourier-space
-      if((ChargeMethod==EWALD)&&(!OmitEwaldFourier))
-         CalculateEwaldFourierCation(FALSE,TRUE,CurrentCationMolecule,0);
-
-      DeltaU+=UHostVDWDelta[CurrentSystem]+UAdsorbateVDWDelta[CurrentSystem]+UCationVDWDelta[CurrentSystem]+
-              UHostChargeChargeRealDelta[CurrentSystem]+UAdsorbateChargeChargeRealDelta[CurrentSystem]+UCationChargeChargeRealDelta[CurrentSystem]+
-              UHostChargeBondDipoleRealDelta[CurrentSystem]+UAdsorbateChargeBondDipoleRealDelta[CurrentSystem]+UCationChargeBondDipoleRealDelta[CurrentSystem]+
-              UHostBondDipoleBondDipoleRealDelta[CurrentSystem]+UAdsorbateBondDipoleBondDipoleRealDelta[CurrentSystem]+UCationBondDipoleBondDipoleRealDelta[CurrentSystem]+
-              UHostCationChargeChargeFourierDelta[CurrentSystem]+UCationCationChargeChargeFourierDelta[CurrentSystem]+UAdsorbateCationChargeChargeFourierDelta[CurrentSystem]+
-              UHostCationChargeBondDipoleFourierDelta[CurrentSystem]+UCationCationChargeBondDipoleFourierDelta[CurrentSystem]+UAdsorbateCationChargeBondDipoleFourierDelta[CurrentSystem]+
-              UHostCationBondDipoleBondDipoleFourierDelta[CurrentSystem]+UCationCationBondDipoleBondDipoleFourierDelta[CurrentSystem]+UAdsorbateCationBondDipoleBondDipoleFourierDelta[CurrentSystem];
-    }
-  }
-  CurrentComponent=StoredCurrentComponent;
-
-  return DeltaU;
-}
-
 
 /*********************************************************************************************************
  * Name       | GetDisplacementVector                                                                    *
@@ -7119,12 +7006,6 @@ int SwapRemoveAdsorbateMove(void)
   if(NumberOfAdsorbateMolecules[CurrentSystem]==0) return 0;
   if(Components[CurrentComponent].NumberOfMolecules[CurrentSystem]<=(Components[CurrentComponent].CFMoleculePresent[CurrentSystem]?1:0)) return 0;
 
-  int numberOfSelectableMolecules=Components[CurrentComponent].NumberOfMolecules[CurrentSystem]
-                                -(Components[CurrentComponent].CFMoleculePresent[CurrentSystem]?1:0)
-                                -numberOfReactionMoleculesForComponent(CurrentComponent);
-
-  if(numberOfSelectableMolecules<=0) return -1;
-
   CurrentAdsorbateMolecule=SelectRandomMoleculeOfTypeExcludingFractionalMolecule(CurrentComponent);
   CurrentCationMolecule=-1;
 
@@ -7870,10 +7751,10 @@ REAL WidomAdsorbateMove(void)
          UHostAdsorbateBondDipoleBondDipoleFourierDelta[CurrentSystem]+UAdsorbateAdsorbateBondDipoleBondDipoleFourierDelta[CurrentSystem]+UAdsorbateCationBondDipoleBondDipoleFourierDelta[CurrentSystem]+
          UDeltaPolarization+UTailNew;
 
-  WidomEnergyDifferenceAccumulated[CurrentSystem][CurrentComponent][Block]+=(UTotal[CurrentSystem]+DeltaU)*RosenbluthNew;
-  WidomRosenbluthFactorAccumulated[CurrentSystem][CurrentComponent][Block]+=RosenbluthNew;
+  WidomEnergyDifferenceAverage[CurrentSystem][CurrentComponent][Block]+=(UTotal[CurrentSystem]+DeltaU)*RosenbluthNew;
+  WidomRosenbluthFactorAverage[CurrentSystem][CurrentComponent][Block]+=RosenbluthNew;
 
-  WidomEnergyFrameworkAccumulated[CurrentSystem][CurrentComponent][Block]+=UTotal[CurrentSystem];
+  WidomEnergyFrameworkAverage[CurrentSystem][CurrentComponent][Block]+=UTotal[CurrentSystem];
   WidomEnergyFrameworkCount[CurrentSystem][CurrentComponent][Block]+=1.0;
 
   return RosenbluthNew;
@@ -7961,10 +7842,10 @@ REAL WidomCationMove(void)
          UHostCationBondDipoleBondDipoleFourierDelta[CurrentSystem]+UCationCationBondDipoleBondDipoleFourierDelta[CurrentSystem]+UAdsorbateCationBondDipoleBondDipoleFourierDelta[CurrentSystem]+
          UDeltaPolarization+UTailNew;
 
-  WidomEnergyDifferenceAccumulated[CurrentSystem][CurrentComponent][Block]+=(UTotal[CurrentSystem]+DeltaU)*RosenbluthNew;
-  WidomRosenbluthFactorAccumulated[CurrentSystem][CurrentComponent][Block]+=RosenbluthNew;
+  WidomEnergyDifferenceAverage[CurrentSystem][CurrentComponent][Block]+=(UTotal[CurrentSystem]+DeltaU)*RosenbluthNew;
+  WidomRosenbluthFactorAverage[CurrentSystem][CurrentComponent][Block]+=RosenbluthNew;
 
-  WidomEnergyFrameworkAccumulated[CurrentSystem][CurrentComponent][Block]+=UTotal[CurrentSystem];
+  WidomEnergyFrameworkAverage[CurrentSystem][CurrentComponent][Block]+=UTotal[CurrentSystem];
   WidomEnergyFrameworkCount[CurrentSystem][CurrentComponent][Block]+=1.0;
 
   return RosenbluthNew;
@@ -15166,8 +15047,8 @@ void SurfaceAreaMove(void)
           }
         }
         temp=(counted/total)*4.0*M_PI*SQR(equilibrium_distance);
-        SurfaceAreaFrameworkAccumulated[CurrentSystem][Block]+=temp;
-        SurfaceAreaFrameworksAccumulated[CurrentSystem][CurrentFramework][Block]+=temp;
+        SurfaceAreaFrameworkAverage[CurrentSystem][Block]+=temp;
+        SurfaceAreaFrameworksAverage[CurrentSystem][CurrentFramework][Block]+=temp;
       }
     }
   }
@@ -15202,8 +15083,8 @@ void SurfaceAreaMove(void)
       }
     }
     temp=(counted/total)*4.0*M_PI*SQR(equilibrium_distance);
-    SurfaceAreaFrameworkAccumulated[CurrentSystem][Block]+=temp;
-    SurfaceAreaCationsAccumulated[CurrentSystem][Block]+=temp;
+    SurfaceAreaFrameworkAverage[CurrentSystem][Block]+=temp;
+    SurfaceAreaCationsAverage[CurrentSystem][Block]+=temp;
   }
   SurfaceAreaCount[CurrentSystem][Block]+=1.0;
 }
@@ -26869,307 +26750,6 @@ void PrintRXMCStatistics(FILE *FilePtr)
    fprintf(FilePtr,"No reactions present, RXMC is OFF\n\n");
 }
 
-
-/*********************************************************************************************************
- * Name       | ExchangeFractionalParticleMove                                                           *
- * ----------------------------------------------------------------------------------------------------- *
- * Function   | Swaps the fractional particle and a randomly chosen integer particle                     *
- * Parameters | -                                                                                        *
- *********************************************************************************************************/
-int ExchangeFractionalParticleMove(void)
-{
-  int i,j,k,l;
-  int FractionalMoleculeNew,FractionalMoleculeOld;
-  int index_old,index_new;
-  REAL Lambda,LambdaCharge;
-  REAL LambdaNew,LambdaOld;
-  REAL BiasOld,BiasNew;
-  int index;
-  REAL DeltaU;
-  int numberOfRetraceMolecules;
-  int FractionalMolecule;
-  int temp_int;
-  REAL UTailDelta;
-  REAL UAdsorbateVDWDeltaFirstStep1,UAdsorbateVDWDeltaFirstStep2,UAdsorbateVDWDeltaSecondStep1,UAdsorbateVDWDeltaSecondStep2;
-  REAL UCationVDWDeltaFirstStep1,UCationVDWDeltaFirstStep2,UCationVDWDeltaSecondStep1,UCationVDWDeltaSecondStep2;
-  REAL UAdsorbateChargeChargeDeltaFirstStep1,UAdsorbateChargeChargeDeltaFirstStep2;
-  REAL UAdsorbateChargeChargeDeltaSecondStep1,UAdsorbateChargeChargeDeltaSecondStep2;
-  REAL UCationChargeChargeDeltaFirstStep1,UCationChargeChargeDeltaFirstStep2;
-  REAL UCationChargeChargeDeltaSecondStep1,UCationChargeChargeDeltaSecondStep2;
-  REAL UAdsorbateChargeChargeFourierDeltaFirstStep;
-  REAL UCationChargeChargeFourierDeltaFirstStep;
-  REAL UHostVDWDeltaFirstStep1,UHostVDWDeltaFirstStep2,UHostVDWDeltaSecondStep1,UHostVDWDeltaSecondStep2;
-  REAL UHostChargeChargeRealDeltaFirstStep1,UHostChargeChargeRealDeltaFirstStep2;
-  REAL UHostChargeChargeRealDeltaSecondStep1,UHostChargeChargeRealDeltaSecondStep2;
-  REAL UHostChargeChargeFourierDeltaFirstStep;
-
-  UAdsorbateVDWDeltaFirstStep1=UAdsorbateVDWDeltaFirstStep2=UAdsorbateVDWDeltaSecondStep1=UAdsorbateVDWDeltaSecondStep2=0.0;
-  UCationVDWDeltaFirstStep1=UCationVDWDeltaFirstStep2=UCationVDWDeltaSecondStep1=UCationVDWDeltaSecondStep2=0.0;
-  UAdsorbateChargeChargeDeltaFirstStep1=UAdsorbateChargeChargeDeltaFirstStep2=0.0;
-  UAdsorbateChargeChargeDeltaSecondStep1=UAdsorbateChargeChargeDeltaSecondStep2=0.0;
-  UCationChargeChargeDeltaFirstStep1=UCationChargeChargeDeltaFirstStep2=0.0;
-  UCationChargeChargeDeltaSecondStep1=UCationChargeChargeDeltaSecondStep2=0.0;
-  UAdsorbateChargeChargeFourierDeltaFirstStep=0.0;
-  UCationChargeChargeFourierDeltaFirstStep=0.0;
-
-  UHostVDWDeltaFirstStep1=UHostVDWDeltaFirstStep2=UHostVDWDeltaSecondStep1=UHostVDWDeltaSecondStep2=0.0;
-  UHostChargeChargeRealDeltaFirstStep1=UHostChargeChargeRealDeltaFirstStep2=0.0;
-  UHostChargeChargeRealDeltaSecondStep1=UHostChargeChargeRealDeltaSecondStep2=0.0;
-  UHostChargeChargeFourierDeltaFirstStep=0.0;
-
-  UTailDelta=0.0;
-
-  if(Components[CurrentComponent].NumberOfMolecules[CurrentSystem]<=1) return 0;
-
-  ExchangeFractionalParticleAttempts[CurrentSystem][CurrentComponent]++;
-
-  FractionalMoleculeOld=Components[CurrentComponent].FractionalMolecule[CurrentSystem];
-  FractionalMoleculeNew=SelectRandomMoleculeOfTypeExcludingFractionalMolecule(CurrentComponent);
-
-  Lambda=Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[0].CFVDWScalingParameter;
-  LambdaCharge=Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[0].CFChargeScalingParameter;
-
-  // First step
-  // ==========================================================================================================================================
-
-  Components[CurrentComponent].FractionalMolecule[CurrentSystem]=FractionalMoleculeNew;
-
-  for(i=0;i<Components[CurrentComponent].NumberOfAtoms;i++)
-  {
-    Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFVDWScalingParameter=1.0;
-    Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFChargeScalingParameter=1.0;
-
-    Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFVDWScalingParameter=Lambda;
-    Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFChargeScalingParameter=LambdaCharge;
-  }
-
-  CalculateInterVDWEnergyDifferenceAdsorbate(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE);
-  UAdsorbateVDWDeltaFirstStep1=-UAdsorbateVDWDelta[CurrentSystem];
-  UCationVDWDeltaFirstStep1=-UCationVDWDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  CalculateInterChargeChargeEnergyDifferenceAdsorbate(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE);
-  UAdsorbateChargeChargeDeltaFirstStep1=-UAdsorbateChargeChargeRealDelta[CurrentSystem];
-  UCationChargeChargeDeltaFirstStep1=-UCationChargeChargeRealDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  CalculateInterVDWEnergyDifferenceAdsorbate(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE);
-  UAdsorbateVDWDeltaFirstStep2=-UAdsorbateVDWDelta[CurrentSystem];
-  UCationVDWDeltaFirstStep2=-UCationVDWDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  CalculateInterChargeChargeEnergyDifferenceAdsorbate(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE);
-  UAdsorbateChargeChargeDeltaFirstStep2=-UAdsorbateChargeChargeRealDelta[CurrentSystem];
-  UCationChargeChargeDeltaFirstStep2=-UCationChargeChargeRealDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  CalculateFrameworkAdsorbateVDWEnergyDifference(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostVDWDeltaFirstStep1=-UHostVDWDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  CalculateFrameworkAdsorbateChargeChargeEnergyDifference(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostChargeChargeRealDeltaFirstStep1=-UHostChargeChargeRealDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  CalculateFrameworkAdsorbateVDWEnergyDifference(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostVDWDeltaFirstStep2=-UHostVDWDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  CalculateFrameworkAdsorbateChargeChargeEnergyDifference(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostChargeChargeRealDeltaFirstStep2=-UHostChargeChargeRealDelta[CurrentSystem];
-  if(OVERLAP) goto rejected_move;
-
-  // CalculateEwaldFourierAdsorbateRXMC(CurrentReaction,1.0-LambdaNew,LambdaNew,0,LambdaRetraceMolecules,NO_FORWARD_OR_BACKWARD,0);
-
-  // Second step
-  // ==========================================================================================================================================
-  Components[CurrentComponent].FractionalMolecule[CurrentSystem]=FractionalMoleculeOld;
-
-  for(i=0;i<Components[CurrentComponent].NumberOfAtoms;i++)
-  {
-    Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFVDWScalingParameter=Lambda;
-    Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFChargeScalingParameter=LambdaCharge;
-
-    Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFVDWScalingParameter=1.0;
-    Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFChargeScalingParameter=1.0;
-  }
-
-  // compute inter-molecular energy differences
-  CalculateInterVDWEnergyDifferenceAdsorbate(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE);
-  UAdsorbateVDWDeltaSecondStep1=-UAdsorbateVDWDelta[CurrentSystem];
-  UCationVDWDeltaSecondStep1=-UCationVDWDelta[CurrentSystem];
-
-  CalculateInterChargeChargeEnergyDifferenceAdsorbate(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE);
-  UAdsorbateChargeChargeDeltaSecondStep1=-UAdsorbateChargeChargeRealDelta[CurrentSystem];
-  UCationChargeChargeDeltaSecondStep1=-UCationChargeChargeRealDelta[CurrentSystem];
-
-  CalculateInterVDWEnergyDifferenceAdsorbate(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE);
-  UAdsorbateVDWDeltaSecondStep2=-UAdsorbateVDWDelta[CurrentSystem];
-  UCationVDWDeltaSecondStep2=-UCationVDWDelta[CurrentSystem];
-
-  CalculateInterChargeChargeEnergyDifferenceAdsorbate(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE);
-  UAdsorbateChargeChargeDeltaSecondStep2=-UAdsorbateChargeChargeRealDelta[CurrentSystem];
-  UCationChargeChargeDeltaSecondStep2=-UCationChargeChargeRealDelta[CurrentSystem];
-
-  CalculateFrameworkAdsorbateVDWEnergyDifference(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostVDWDeltaSecondStep1=-UHostVDWDelta[CurrentSystem];
-  CalculateFrameworkAdsorbateChargeChargeEnergyDifference(FractionalMoleculeOld,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostChargeChargeRealDeltaSecondStep1=-UHostChargeChargeRealDelta[CurrentSystem];
-
-  CalculateFrameworkAdsorbateVDWEnergyDifference(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostVDWDeltaSecondStep2=-UHostVDWDelta[CurrentSystem];
-  CalculateFrameworkAdsorbateChargeChargeEnergyDifference(FractionalMoleculeNew,CurrentComponent,FALSE,TRUE,FALSE);
-  UHostChargeChargeRealDeltaSecondStep2=-UHostChargeChargeRealDelta[CurrentSystem];
-
-
-  if((ChargeMethod==EWALD)&&(!OmitEwaldFourier))
-  {
-    int Molecules[2];
-    REAL CFChargeScalingNew[2];
-    REAL CFChargeScalingOld[2];
-
-    Molecules[0]=FractionalMoleculeOld;
-    Molecules[1]=FractionalMoleculeNew;
-
-    CFChargeScalingOld[0]=LambdaCharge;
-    CFChargeScalingOld[1]=1.0;
-
-    CFChargeScalingNew[0]=1.0;
-    CFChargeScalingNew[1]=LambdaCharge;
-
-    CalculateEwaldFourierAdsorbateTupleLambda(2, Molecules, CFChargeScalingNew, CFChargeScalingOld, 0);
-
-    UAdsorbateChargeChargeFourierDeltaFirstStep=UAdsorbateAdsorbateChargeChargeFourierDelta[CurrentSystem];
-    UCationChargeChargeFourierDeltaFirstStep=UAdsorbateCationChargeChargeFourierDelta[CurrentSystem];
-    UHostChargeChargeFourierDeltaFirstStep=UHostAdsorbateChargeChargeFourierDelta[CurrentSystem];
-  }
-
-
-
-  DeltaU=UAdsorbateVDWDeltaFirstStep1+UAdsorbateVDWDeltaFirstStep2-UAdsorbateVDWDeltaSecondStep1-UAdsorbateVDWDeltaSecondStep2+
-         UCationVDWDeltaFirstStep1+UCationVDWDeltaFirstStep2-UCationVDWDeltaSecondStep1-UCationVDWDeltaSecondStep2+
-         UAdsorbateChargeChargeDeltaFirstStep1+UAdsorbateChargeChargeDeltaFirstStep2-UAdsorbateChargeChargeDeltaSecondStep1-UAdsorbateChargeChargeDeltaSecondStep2+
-         UCationChargeChargeDeltaFirstStep1+UCationChargeChargeDeltaFirstStep2-UCationChargeChargeDeltaSecondStep1-UCationChargeChargeDeltaSecondStep2+
-         UHostVDWDeltaFirstStep1+UHostVDWDeltaFirstStep2-UHostVDWDeltaSecondStep1-UHostVDWDeltaSecondStep2+
-         UHostChargeChargeRealDeltaFirstStep1+UHostChargeChargeRealDeltaFirstStep2
-         -UHostChargeChargeRealDeltaSecondStep1-UHostChargeChargeRealDeltaSecondStep2+
-         UAdsorbateChargeChargeFourierDeltaFirstStep+
-         UCationChargeChargeFourierDeltaFirstStep+
-         UHostChargeChargeFourierDeltaFirstStep;
-
-  if(RandomNumber()<exp(-Beta[CurrentSystem]*DeltaU))
-  {
-    ExchangeFractionalParticleAccepted[CurrentSystem][CurrentComponent]++;
-
-    Components[CurrentComponent].FractionalMolecule[CurrentSystem]=FractionalMoleculeNew;
-
-    for(i=0;i<Components[CurrentComponent].NumberOfAtoms;i++)
-    {
-      Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFVDWScalingParameter=1.0;
-      Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFChargeScalingParameter=1.0;
-
-      Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFVDWScalingParameter=Lambda;
-      Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFChargeScalingParameter=LambdaCharge;
-    }
-
-    UAdsorbateAdsorbate[CurrentSystem]+=UAdsorbateVDWDeltaFirstStep1+UAdsorbateVDWDeltaFirstStep2-UAdsorbateVDWDeltaSecondStep1-UAdsorbateVDWDeltaSecondStep2+
-                                  UAdsorbateChargeChargeDeltaFirstStep1+UAdsorbateChargeChargeDeltaFirstStep2
-                                 -UAdsorbateChargeChargeDeltaSecondStep1-UAdsorbateChargeChargeDeltaSecondStep2;
-    UAdsorbateCation[CurrentSystem]+=UCationVDWDeltaFirstStep1+UCationVDWDeltaFirstStep2-UCationVDWDeltaSecondStep1-UCationVDWDeltaSecondStep2+
-                                     UCationChargeChargeDeltaFirstStep1+UCationChargeChargeDeltaFirstStep2
-                                     -UCationChargeChargeDeltaSecondStep1-UCationChargeChargeDeltaSecondStep2;
-    UAdsorbateAdsorbateVDW[CurrentSystem]+=UAdsorbateVDWDeltaFirstStep1+UAdsorbateVDWDeltaFirstStep2-UAdsorbateVDWDeltaSecondStep1-UAdsorbateVDWDeltaSecondStep2;
-    UAdsorbateCationVDW[CurrentSystem]+=UCationVDWDeltaFirstStep1+UCationVDWDeltaFirstStep2-UCationVDWDeltaSecondStep1-UCationVDWDeltaSecondStep2;
-
-    UHostAdsorbate[CurrentSystem]+=UHostVDWDeltaFirstStep1+UHostVDWDeltaFirstStep2-UHostVDWDeltaSecondStep1-UHostVDWDeltaSecondStep2+
-                                   UHostChargeChargeRealDeltaFirstStep1+UHostChargeChargeRealDeltaFirstStep2
-                                   -UHostChargeChargeRealDeltaSecondStep1-UHostChargeChargeRealDeltaSecondStep2+
-                                   UHostChargeChargeFourierDeltaFirstStep;
-    UHostAdsorbateChargeChargeReal[CurrentSystem]+=UHostChargeChargeRealDeltaFirstStep1+UHostChargeChargeRealDeltaFirstStep2
-                                                  -UHostChargeChargeRealDeltaSecondStep1-UHostChargeChargeRealDeltaSecondStep2;
-    UHostAdsorbateChargeChargeFourier[CurrentSystem]+=UHostChargeChargeFourierDeltaFirstStep;
-    UHostAdsorbateCoulomb[CurrentSystem]+=UHostChargeChargeRealDeltaFirstStep1+UHostChargeChargeRealDeltaFirstStep2
-                                         -UHostChargeChargeRealDeltaSecondStep1-UHostChargeChargeRealDeltaSecondStep2+
-                                          UHostChargeChargeFourierDeltaFirstStep;
-    UHostAdsorbateVDW[CurrentSystem]+=UHostVDWDeltaFirstStep1+UHostVDWDeltaFirstStep2-UHostVDWDeltaSecondStep1-UHostVDWDeltaSecondStep2;
-
-    UAdsorbateAdsorbateCoulomb[CurrentSystem]+=UAdsorbateChargeChargeDeltaFirstStep1+UAdsorbateChargeChargeDeltaFirstStep2
-                                               -UAdsorbateChargeChargeDeltaSecondStep1-UAdsorbateChargeChargeDeltaSecondStep2;
-    UAdsorbateCationCoulomb[CurrentSystem]+=UCationChargeChargeDeltaFirstStep1+UCationChargeChargeDeltaFirstStep2+
-                                           -UCationChargeChargeDeltaSecondStep1-UCationChargeChargeDeltaSecondStep2;
-    UAdsorbateAdsorbateChargeChargeReal[CurrentSystem]+=UAdsorbateChargeChargeDeltaFirstStep1+UAdsorbateChargeChargeDeltaFirstStep2
-                                                       -UAdsorbateChargeChargeDeltaSecondStep1-UAdsorbateChargeChargeDeltaSecondStep2;
-    UAdsorbateCationChargeChargeReal[CurrentSystem]+=UCationChargeChargeDeltaFirstStep1+UCationChargeChargeDeltaFirstStep2
-                                                    -UCationChargeChargeDeltaSecondStep1-UCationChargeChargeDeltaSecondStep2;
-
-    UAdsorbateAdsorbate[CurrentSystem]+=UAdsorbateChargeChargeFourierDeltaFirstStep;
-    UAdsorbateCation[CurrentSystem]+=UCationChargeChargeFourierDeltaFirstStep;
-    UAdsorbateAdsorbateCoulomb[CurrentSystem]+=UAdsorbateChargeChargeFourierDeltaFirstStep;
-    UAdsorbateCationCoulomb[CurrentSystem]+=UCationChargeChargeFourierDeltaFirstStep;
-    UAdsorbateAdsorbateChargeChargeFourier[CurrentSystem]+=UAdsorbateChargeChargeFourierDeltaFirstStep;
-    UAdsorbateCationChargeChargeFourier[CurrentSystem]+=UCationChargeChargeFourierDeltaFirstStep;
-
-    UTailCorrection[CurrentSystem]+=UTailDelta;
-
-    UTotal[CurrentSystem]+=DeltaU;
-
-    if((ChargeMethod==EWALD)&&(!OmitEwaldFourier))
-      AcceptEwaldAdsorbateMove(0);
-  }
-  else
-  {
-    rejected_move:;
-      Components[CurrentComponent].FractionalMolecule[CurrentSystem]=FractionalMoleculeOld;
-
-      // restore lambda for fractional particle, and set integer back to 1.0
-      for(i=0;i<Components[CurrentComponent].NumberOfAtoms;i++)
-      {
-        Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFVDWScalingParameter=Lambda;
-        Adsorbates[CurrentSystem][FractionalMoleculeOld].Atoms[i].CFChargeScalingParameter=LambdaCharge;
-
-        Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFVDWScalingParameter=1.0;
-        Adsorbates[CurrentSystem][FractionalMoleculeNew].Atoms[i].CFChargeScalingParameter=1.0;
-      }
-  }
-}
-
-void PrintExchangeFractionalParticleStatistics(FILE *FilePtr)
-{
-  int i,MoveUsed;
-
-  MoveUsed=FALSE;
-  for(i=0;i<NumberOfComponents;i++)
-  {
-    if(Components[i].FractionOfExchangeFractionalParticleMove>0.0)
-    {
-      MoveUsed=TRUE;
-      break;
-    }
-  }
-
-  if(MoveUsed)
-  {
-    fprintf(FilePtr,"Performance of the exchange fractional particle move:\n");
-    fprintf(FilePtr,"=====================================================\n");
-    for(i=0;i<NumberOfComponents;i++)
-    {
-      fprintf(FilePtr,"Component %d [%s]\n",i,Components[i].Name);
-      fprintf(FilePtr,"\ttotal        %lf\n",
-        (double)ExchangeFractionalParticleAttempts[CurrentSystem][i]);
-      fprintf(FilePtr,"\tsuccesfull   %lf\n",
-        (double)ExchangeFractionalParticleAccepted[CurrentSystem][i]);
-      fprintf(FilePtr,"\taccepted   %lf\n",
-        (double)(ExchangeFractionalParticleAttempts[CurrentSystem][i]>(REAL)0.0?
-          ExchangeFractionalParticleAccepted[CurrentSystem][i]/ExchangeFractionalParticleAttempts[CurrentSystem][i]:(REAL)0.0));
-      fprintf(FilePtr,"\n");
-    }
-    fprintf(FilePtr,"\n");
-  }
-  else
-   fprintf(FilePtr,"Exchange fractional-particle move was OFF for all components\n\n");
-}
-
-
 void WriteRestartMcMoves(FILE *FilePtr)
 {
   int i,j;
@@ -27185,9 +26765,6 @@ void WriteRestartMcMoves(FILE *FilePtr)
 
     fwrite(RandomTranslationAttempts[i],sizeof(REAL),NumberOfComponents,FilePtr);
     fwrite(RandomTranslationAccepted[i],sizeof(REAL),NumberOfComponents,FilePtr);
-
-    fwrite(ExchangeFractionalParticleAttempts[i],sizeof(REAL),NumberOfComponents,FilePtr);
-    fwrite(ExchangeFractionalParticleAccepted[i],sizeof(REAL),NumberOfComponents,FilePtr);
 
     fwrite(RotationAttempts[i],sizeof(VECTOR),NumberOfComponents,FilePtr);
     fwrite(RotationAccepted[i],sizeof(VECTOR),NumberOfComponents,FilePtr);
@@ -27500,9 +27077,6 @@ void AllocateMCMovesMemory(void)
   RandomTranslationAttempts=(REAL**)calloc(NumberOfSystems,sizeof(REAL*));
   RandomTranslationAccepted=(REAL**)calloc(NumberOfSystems,sizeof(REAL*));
 
-  ExchangeFractionalParticleAttempts=(REAL**)calloc(NumberOfSystems,sizeof(REAL*));
-  ExchangeFractionalParticleAccepted=(REAL**)calloc(NumberOfSystems,sizeof(REAL*));
-
   RotationAttempts=(VECTOR**)calloc(NumberOfSystems,sizeof(VECTOR*));
   RotationAccepted=(VECTOR**)calloc(NumberOfSystems,sizeof(VECTOR*));
   TotalRotationAttempts=(VECTOR**)calloc(NumberOfSystems,sizeof(VECTOR*));
@@ -27595,9 +27169,6 @@ void AllocateMCMovesMemory(void)
 
     RandomTranslationAttempts[i]=(REAL*)calloc(NumberOfComponents,sizeof(REAL));
     RandomTranslationAccepted[i]=(REAL*)calloc(NumberOfComponents,sizeof(REAL));
-
-    ExchangeFractionalParticleAttempts[i]=(REAL*)calloc(NumberOfComponents,sizeof(REAL));
-    ExchangeFractionalParticleAccepted[i]=(REAL*)calloc(NumberOfComponents,sizeof(REAL));
 
     RotationAttempts[i]=(VECTOR*)calloc(NumberOfComponents,sizeof(VECTOR));
     RotationAccepted[i]=(VECTOR*)calloc(NumberOfComponents,sizeof(VECTOR));
@@ -27878,9 +27449,6 @@ void ReadRestartMcMoves(FILE *FilePtr)
 
     fread(RandomTranslationAttempts[i],sizeof(REAL),NumberOfComponents,FilePtr);
     fread(RandomTranslationAccepted[i],sizeof(REAL),NumberOfComponents,FilePtr);
-
-    fread(ExchangeFractionalParticleAttempts[i],sizeof(REAL),NumberOfComponents,FilePtr);
-    fread(ExchangeFractionalParticleAccepted[i],sizeof(REAL),NumberOfComponents,FilePtr);
 
     fread(RotationAttempts[i],sizeof(VECTOR),NumberOfComponents,FilePtr);
     fread(RotationAccepted[i],sizeof(VECTOR),NumberOfComponents,FilePtr);

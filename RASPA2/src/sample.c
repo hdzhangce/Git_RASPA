@@ -81,7 +81,6 @@ static REAL **CountProjectedLengths;
 int *ProjectedLengthsHistogramSize;
 REAL *ProjectedLengthsRange;
 static VECTOR ***ProjectedLengthsDistributionFunction;
-static VECTOR **ProjectedLengthsAverage;
 
 int *ComputeProjectedAngles;
 int *WriteProjectedAnglesEvery;
@@ -262,11 +261,9 @@ REAL **SpectrumCount;
 int *ComputeMSDOrderN;                           // whether or not to compute the msd
 int *SampleMSDOrderNEvery;                       // the sample frequency
 int *WriteMSDOrderNEvery;                        // write output every 'WriteMSDOrderNEvery' steps
-int *NumberOfSitesMSDOrderN;                     // the number of dfferent sites
 int NumberOfBlockElementsMSDOrderN;              // the number of elements per block
 int MaxNumberOfBlocksMSDOrderN;                  // the maxmimum amount of blocks (data beyond this block is ignored)
 int ComputeIndividualMSDOrderN;                  // whether or not to compute (self-)msd's for individual molecules
-int ComputeSiteTypeMSDOrderN;                    // whether or not to compute (self-)msd's for individual molecules
 int ComputeMSDOrderNPerPseudoAtom;               // whether or not to compute (self-)msd's for (pseudo-)atoms
 static int *CountMSDOrderN;                      // counter for the amount of msd's measured
 static int *NumberOfBlocksMSDOrderN;             // the current number of blocks in use
@@ -285,10 +282,6 @@ static REAL ****MsdOrderNOnsagerCount;           // counter for the amount of On
 static VECTOR ***MsdOrderNTotalOnsager;          // the Onsager-msd in x,y,z for the fluid
 static REAL ***MsdOrderNTotalOnsagerCount;       // the Onsager-msd directionally for the fluid
 static REAL ***MsdOrderNTotalOnsagerDirAvg;      // counter for the amount of Onsager fluid msd-samples
-static REAL ****MsdOrderNCountPerSiteType;       // counter for the amount of self msd-samples per site-type
-static VECTOR ****MsdOrderNPerSiteType;          // the self-msd in x,y,z per site-type
-static REAL ****MsdOrderNPerSiteTypeDirAvg;      // the self-msd directionally averaged per site-type
-static int ****BlockDataSiteTypeMSDOrderN;       // array for all blocks containing all the molecule positions per component
 
 // sampling the velocity autocorrelation function using a modified order-N algorithm
 int *ComputeVACFOrderN;                          // whether or not to compute the vacf
@@ -832,14 +825,12 @@ void SampleProjectedLengthsDistributionFunction(int Switch)
     case ALLOCATE:
       // allocate mememory for the storage, a 3D array
       ProjectedLengthsDistributionFunction=(VECTOR***)calloc(NumberOfSystems,sizeof(VECTOR**));
-      ProjectedLengthsAverage=(VECTOR**)calloc(NumberOfSystems,sizeof(VECTOR*));
       CountProjectedLengths=(REAL**)calloc(NumberOfSystems,sizeof(REAL*));
       for(i=0;i<NumberOfSystems;i++)
       {
         if(ComputeProjectedLengths[i])
         {
           ProjectedLengthsDistributionFunction[i]=(VECTOR**)calloc(NumberOfComponents,sizeof(VECTOR*));
-          ProjectedLengthsAverage[i]=(VECTOR*)calloc(NumberOfComponents,sizeof(VECTOR));
           CountProjectedLengths[i]=(REAL*)calloc(NumberOfComponents,sizeof(REAL));
           for(j=0;j<NumberOfComponents;j++)
           {
@@ -881,9 +872,6 @@ void SampleProjectedLengthsDistributionFunction(int Switch)
         ProjectedLengthsDistributionFunction[CurrentSystem][Type][(int)(fabs(max.x-min.x)/deltaR)].x+=1.0;
         ProjectedLengthsDistributionFunction[CurrentSystem][Type][(int)(fabs(max.y-min.y)/deltaR)].y+=1.0;
         ProjectedLengthsDistributionFunction[CurrentSystem][Type][(int)(fabs(max.z-min.z)/deltaR)].z+=1.0;
-        ProjectedLengthsAverage[CurrentSystem][Type].x+=fabs(max.x-min.x);
-        ProjectedLengthsAverage[CurrentSystem][Type].y+=fabs(max.y-min.y);
-        ProjectedLengthsAverage[CurrentSystem][Type].z+=fabs(max.z-min.z);
         CountProjectedLengths[CurrentSystem][Type]++;
       }
       break;
@@ -906,11 +894,6 @@ void SampleProjectedLengthsDistributionFunction(int Switch)
               CurrentSystem,Components[i].Name,FileNameAppend);
         FilePtr=fopen(buffer,"w");
         normalization=CountProjectedLengths[CurrentSystem][i];
-
-        fprintf(FilePtr,"# average x: %18.10f\n",ProjectedLengthsAverage[CurrentSystem][i].x/normalization);
-        fprintf(FilePtr,"# average y: %18.10f\n",ProjectedLengthsAverage[CurrentSystem][i].y/normalization);
-        fprintf(FilePtr,"# average z: %18.10f\n",ProjectedLengthsAverage[CurrentSystem][i].z/normalization);
-
         for(k=0;k<ProjectedLengthsHistogramSize[CurrentSystem];k++)
         {
           fprintf(FilePtr,"%d %lf %lf %lf %lf\n",
@@ -932,12 +915,10 @@ void SampleProjectedLengthsDistributionFunction(int Switch)
           for(j=0;j<NumberOfComponents;j++)
             free(ProjectedLengthsDistributionFunction[i][j]);
           free(ProjectedLengthsDistributionFunction[i]);
-          free(ProjectedLengthsAverage[i]);
           free(CountProjectedLengths[i]);
         }
       }
       free(ProjectedLengthsDistributionFunction);
-      free(ProjectedLengthsAverage);
       free(CountProjectedLengths);
       break;
   }
@@ -6092,29 +6073,11 @@ void SampleInfraRedSpectra(int Switch)
  * Parameters | -                                                                                        *
  *********************************************************************************************************/
 
-int CalculateSiteType(VECTOR pos)
-{
-  int type;
-  int closest;
-  REAL distance;
-
-  if (Framework[CurrentSystem].NumberOfIons==0) return 0;
-
-  ClosestCrystallographicPosition2(pos,&closest,&distance);
-
-  type = Framework[CurrentSystem].Ions[closest].AssymetricType;
-
-  if(distance>CutOffIons) return 0;
-
-  return type+1;
-}
-
 void SampleMeanSquaredDisplacementOrderN(int Switch)
 {
   int i,j,k,l,CurrentBlock,index;
   int CurrentBlocklength,type,shift;
   VECTOR value,drift,com;
-  int site_type;
   static VECTOR *value_onsager;
   FILE *FilePtr;
   char buffer[256];
@@ -6142,12 +6105,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
       MsdOrderNTotalOnsager=(VECTOR***)calloc(NumberOfSystems,sizeof(VECTOR**));
       MsdOrderNTotalOnsagerDirAvg=(REAL***)calloc(NumberOfSystems,sizeof(REAL**));
       MsdOrderNTotalOnsagerCount=(REAL***)calloc(NumberOfSystems,sizeof(REAL**));
-
-      MsdOrderNCountPerSiteType=(REAL****)calloc(NumberOfSystems,sizeof(REAL***));
-      MsdOrderNPerSiteType=(VECTOR****)calloc(NumberOfSystems,sizeof(VECTOR***));
-      MsdOrderNPerSiteTypeDirAvg=(REAL****)calloc(NumberOfSystems,sizeof(REAL***));
-      BlockDataSiteTypeMSDOrderN=(int****)calloc(NumberOfSystems,sizeof(int***));
-
       for(i=0;i<NumberOfSystems;i++)
       {
         if(ComputeMSDOrderN[i])
@@ -6171,26 +6128,12 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
             MsdOrderNPerMoleculeDirAvg[i]=(REAL***)calloc(MaxNumberOfBlocksMSDOrderN,sizeof(REAL**));
             MsdOrderNPerMolecule[i]=(VECTOR***)calloc(MaxNumberOfBlocksMSDOrderN,sizeof(VECTOR**));
           }
-          if(ComputeSiteTypeMSDOrderN)
-          {
-            MsdOrderNCountPerSiteType[i]=(REAL***)calloc(MaxNumberOfBlocksMSDOrderN,sizeof(REAL**));
-            MsdOrderNPerSiteTypeDirAvg[i]=(REAL***)calloc(MaxNumberOfBlocksMSDOrderN,sizeof(REAL**));
-            MsdOrderNPerSiteType[i]=(VECTOR***)calloc(MaxNumberOfBlocksMSDOrderN,sizeof(VECTOR**));
-            BlockDataSiteTypeMSDOrderN[i]=(int***)calloc(MaxNumberOfBlocksMSDOrderN,sizeof(int**));
-          }
 
           for(j=0;j<MaxNumberOfBlocksMSDOrderN;j++)
           {
             BlockDataMSDOrderN[i][j]=(VECTOR**)calloc(NumberOfAdsorbateMolecules[i]+NumberOfCationMolecules[i],sizeof(VECTOR*));
             for(k=0;k<NumberOfAdsorbateMolecules[i]+NumberOfCationMolecules[i];k++)
               BlockDataMSDOrderN[i][j][k]=(VECTOR*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(VECTOR));
-
-            if(ComputeSiteTypeMSDOrderN)
-            {
-              BlockDataSiteTypeMSDOrderN[i][j]=(int**)calloc(NumberOfAdsorbateMolecules[i]+NumberOfCationMolecules[i],sizeof(int*));
-              for(k=0;k<NumberOfAdsorbateMolecules[i]+NumberOfCationMolecules[i];k++)
-                BlockDataSiteTypeMSDOrderN[i][j][k]=(int*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(int));
-            }
 
             MsdOrderNCount[i][j]=(REAL**)calloc(NumberOfComponents,sizeof(REAL*));
             MsdOrderNDirAvg[i][j]=(REAL**)calloc(NumberOfComponents,sizeof(REAL*));
@@ -6212,19 +6155,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
                 MsdOrderNCountPerMolecule[i][j][k]=(REAL*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(REAL));
                 MsdOrderNPerMolecule[i][j][k]=(VECTOR*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(VECTOR));
                 MsdOrderNPerMoleculeDirAvg[i][j][k]=(REAL*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(REAL));
-              }
-            }
-
-            if(ComputeSiteTypeMSDOrderN)
-            {
-              MsdOrderNCountPerSiteType[i][j]=(REAL**)calloc(NumberOfSitesMSDOrderN[i],sizeof(REAL*));
-              MsdOrderNPerSiteTypeDirAvg[i][j]=(REAL**)calloc(NumberOfSitesMSDOrderN[i],sizeof(REAL*));
-              MsdOrderNPerSiteType[i][j]=(VECTOR**)calloc(NumberOfSitesMSDOrderN[i],sizeof(VECTOR*));
-              for(k=0;k<NumberOfSitesMSDOrderN[i];k++)
-              {
-                MsdOrderNCountPerSiteType[i][j][k]=(REAL*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(REAL));
-                MsdOrderNPerSiteType[i][j][k]=(VECTOR*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(VECTOR));
-                MsdOrderNPerSiteTypeDirAvg[i][j][k]=(REAL*)calloc(NumberOfBlockElementsMSDOrderN,sizeof(REAL));
               }
             }
 
@@ -6323,16 +6253,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
               BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j]=BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j-1];
             BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][0]=value;
 
-            if(ComputeSiteTypeMSDOrderN)
-            {
-
-              for(j=CurrentBlocklength-1;j>0;j--)
-                BlockDataSiteTypeMSDOrderN[CurrentSystem][CurrentBlock][i][j]=BlockDataSiteTypeMSDOrderN[CurrentSystem][CurrentBlock][i][j-1];
-
-              // set the type of the site for this measurement-point
-              site_type=CalculateSiteType(value);
-              BlockDataSiteTypeMSDOrderN[CurrentSystem][CurrentBlock][i][0]=site_type;
-            }
 
             // get the type of the molecule
             if(i<NumberOfAdsorbateMolecules[CurrentSystem])
@@ -6360,27 +6280,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
                 MsdOrderNPerMoleculeDirAvg[CurrentSystem][CurrentBlock][i][j]+=SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].x-value.x)+
                                                                                SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].y-value.y)+
                                                                                SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].z-value.z);
-              }
-
-              if(ComputeSiteTypeMSDOrderN)
-              {
-                if(site_type>=NumberOfSitesMSDOrderN[CurrentSystem])
-                {
-                  printf("ERROR: site-type %d > maximum number of sites %d in routine 'SampleMeanSquaredDisplacementOrderN'\n",site_type,NumberOfSitesMSDOrderN[CurrentSystem]);
-                  exit(0);
-                }
-
-                // only count when the site is currently the same as it was at the acf-origin
-                if (BlockDataSiteTypeMSDOrderN[CurrentSystem][CurrentBlock][i][j] == site_type)
-                {
-                  MsdOrderNCountPerSiteType[CurrentSystem][CurrentBlock][site_type][j]+=1.0;
-                  MsdOrderNPerSiteType[CurrentSystem][CurrentBlock][site_type][j].x+=SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].x-value.x);
-                  MsdOrderNPerSiteType[CurrentSystem][CurrentBlock][site_type][j].y+=SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].y-value.y);
-                  MsdOrderNPerSiteType[CurrentSystem][CurrentBlock][site_type][j].z+=SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].z-value.z);
-                  MsdOrderNPerSiteTypeDirAvg[CurrentSystem][CurrentBlock][site_type][j]+=SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].x-value.x)+
-                                                                                         SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].y-value.y)+
-                                                                                         SQR(BlockDataMSDOrderN[CurrentSystem][CurrentBlock][i][j].z-value.z);
-                }
               }
             }
           }
@@ -6642,44 +6541,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
 
       }
 
-      if(ComputeSiteTypeMSDOrderN)
-      {
-        sprintf(buffer,"MSDOrderN/System_%d/MSDOrderN_per_site",CurrentSystem);
-        mkdir(buffer,S_IRWXU);
-
-        // print out msd per adsorbate
-        for(i=0;i<NumberOfSitesMSDOrderN[CurrentSystem];i++)
-        {
-          sprintf(buffer,"MSDOrderN/System_%d/MSDOrderN_per_site/msd_self_%d%s.dat",
-                  CurrentSystem,i,FileNameAppend);
-
-          FilePtr=fopen(buffer,"w");
-
-          // write results to file
-          for(CurrentBlock=0;CurrentBlock<MIN2(MaxNumberOfBlocksMSDOrderN,NumberOfBlocksMSDOrderN[CurrentSystem]);CurrentBlock++)
-          {
-            CurrentBlocklength=MIN2(BlockLengthMSDOrderN[CurrentSystem][CurrentBlock],NumberOfBlockElementsMSDOrderN);
-            dt=SampleMSDOrderNEvery[CurrentSystem]*DeltaT*pow((REAL)NumberOfBlockElementsMSDOrderN,CurrentBlock);
-            for(j=1;j<CurrentBlocklength;j++)
-            {
-              if(MsdOrderNCountPerSiteType[CurrentSystem][CurrentBlock][i][j]>0.0)
-              {
-                fac=1.0/MsdOrderNCountPerSiteType[CurrentSystem][CurrentBlock][i][j];
-                fprintf(FilePtr,"%g %g %g %g %g (count: %g)\n",
-                    (double)(j*dt),
-                    (double)(fac*MsdOrderNPerSiteTypeDirAvg[CurrentSystem][CurrentBlock][i][j]),
-                    (double)(fac*MsdOrderNPerSiteType[CurrentSystem][CurrentBlock][i][j].x),
-                    (double)(fac*MsdOrderNPerSiteType[CurrentSystem][CurrentBlock][i][j].y),
-                    (double)(fac*MsdOrderNPerSiteType[CurrentSystem][CurrentBlock][i][j].z),
-                    (double)MsdOrderNCountPerSiteType[CurrentSystem][CurrentBlock][i][j]);
-              }
-            }
-          }
-
-          fclose(FilePtr);
-        }
-      }
-
       // Onsager diffusion
       // ========================================================================================================================
 
@@ -6778,24 +6639,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
               free(MsdOrderNPerMolecule[i][j]);
             }
 
-            if(ComputeSiteTypeMSDOrderN)
-            {
-              for(k=0;k<NumberOfAdsorbateMolecules[i]+NumberOfCationMolecules[i];k++)
-                free(BlockDataSiteTypeMSDOrderN[i][j][k]);
-
-              free(BlockDataSiteTypeMSDOrderN[i][j]);
-
-              for(k=0;k<NumberOfSitesMSDOrderN[i];k++)
-              {
-                free(MsdOrderNCountPerSiteType[i][j][k]);
-                free(MsdOrderNPerSiteType[i][j][k]);
-                free(MsdOrderNPerSiteTypeDirAvg[i][j][k]);
-              }
-              free(MsdOrderNCountPerSiteType[i][j]);
-              free(MsdOrderNPerSiteTypeDirAvg[i][j]);
-              free(MsdOrderNPerSiteType[i][j]);
-            }
-
             // Onsager data
             for(k=0;k<NumberOfComponents;k++)
             {
@@ -6827,13 +6670,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
             free(MsdOrderNPerMolecule[i]);
           }
 
-          if(ComputeIndividualMSDOrderN)
-          {
-            free(MsdOrderNCountPerSiteType[i]);
-            free(MsdOrderNPerSiteTypeDirAvg[i]);
-            free(MsdOrderNPerSiteType[i]);
-          }
-
           free(BlockLengthMSDOrderN[i]);
           free(MsdOrderNCount[i]);
           free(MsdOrderNOnsagerCount[i]);
@@ -6842,7 +6678,6 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
           free(MsdOrderN[i]);
           free(MsdOrderNOnsager[i]);
           free(BlockDataMSDOrderN[i]);
-          free(BlockDataSiteTypeMSDOrderN[i]);
           free(BlockDataMSDOrderNOnsager[i]);
           free(MsdOrderNTotalOnsager[i]);
           free(MsdOrderNTotalOnsagerDirAvg[i]);
@@ -6856,17 +6691,13 @@ void SampleMeanSquaredDisplacementOrderN(int Switch)
       free(MsdOrderNCount);
       free(MsdOrderNOnsagerCount);
       free(MsdOrderNCountPerMolecule);
-      free(MsdOrderNCountPerSiteType);
       free(MsdOrderNDirAvg);
       free(MsdOrderNOnsagerDirAvg);
       free(MsdOrderNPerMoleculeDirAvg);
-      free(MsdOrderNPerSiteTypeDirAvg);
       free(MsdOrderN);
       free(MsdOrderNOnsager);
       free(MsdOrderNPerMolecule);
-      free(MsdOrderNPerSiteType);
       free(BlockDataMSDOrderN);
-      free(BlockDataSiteTypeMSDOrderN);
       free(BlockDataMSDOrderNOnsager);
       free(MsdOrderNTotalOnsager);
       free(MsdOrderNTotalOnsagerDirAvg);
@@ -10280,9 +10111,9 @@ void MeasurePrincipleMomentsOfInertia(void)
     }
 
     // register the principle moments of inertia per component type
-    PrincipleMomentsOfInertiaAccumulated[CurrentSystem][ComponentType][Block].x+=InertiaVector.x;
-    PrincipleMomentsOfInertiaAccumulated[CurrentSystem][ComponentType][Block].y+=InertiaVector.y;
-    PrincipleMomentsOfInertiaAccumulated[CurrentSystem][ComponentType][Block].z+=InertiaVector.z;
+    PrincipleMomentsOfInertiaAverage[CurrentSystem][ComponentType][Block].x+=InertiaVector.x;
+    PrincipleMomentsOfInertiaAverage[CurrentSystem][ComponentType][Block].y+=InertiaVector.y;
+    PrincipleMomentsOfInertiaAverage[CurrentSystem][ComponentType][Block].z+=InertiaVector.z;
 
     // CountMSDOrderNer needed because the amount of molecules could vary in GC-MC
     PrincipleMomentsOfInertiaCount[CurrentSystem][ComponentType][Block]+=1.0;
@@ -10388,9 +10219,9 @@ void MeasurePrincipleMomentsOfInertia(void)
     }
 
     // register the principle moments of inertia per component type
-    PrincipleMomentsOfInertiaAccumulated[CurrentSystem][ComponentType][Block].x+=InertiaVector.x;
-    PrincipleMomentsOfInertiaAccumulated[CurrentSystem][ComponentType][Block].y+=InertiaVector.y;
-    PrincipleMomentsOfInertiaAccumulated[CurrentSystem][ComponentType][Block].z+=InertiaVector.z;
+    PrincipleMomentsOfInertiaAverage[CurrentSystem][ComponentType][Block].x+=InertiaVector.x;
+    PrincipleMomentsOfInertiaAverage[CurrentSystem][ComponentType][Block].y+=InertiaVector.y;
+    PrincipleMomentsOfInertiaAverage[CurrentSystem][ComponentType][Block].z+=InertiaVector.z;
 
     // CountMSDOrderNer needed because the amount of molecules could vary in GC-MC
     PrincipleMomentsOfInertiaCount[CurrentSystem][ComponentType][Block]+=1.0;
@@ -10462,7 +10293,6 @@ void WriteRestartSample(FILE *FilePtr)
     if(ComputeProjectedLengths[i])
     {
       fwrite(CountProjectedLengths[i],NumberOfComponents,sizeof(REAL),FilePtr);
-      fwrite(ProjectedLengthsAverage[i],NumberOfComponents,sizeof(VECTOR),FilePtr);
       for(j=0;j<NumberOfComponents;j++)
         fwrite(ProjectedLengthsDistributionFunction[i][j],ProjectedLengthsHistogramSize[i],sizeof(VECTOR),FilePtr);
     }
@@ -10822,8 +10652,6 @@ void WriteRestartSample(FILE *FilePtr)
   fwrite(&NumberOfBlockElementsMSDOrderN,1,sizeof(int),FilePtr);
   fwrite(&MaxNumberOfBlocksMSDOrderN,1,sizeof(int),FilePtr);
   fwrite(&ComputeIndividualMSDOrderN,1,sizeof(int),FilePtr);
-  fwrite(&ComputeSiteTypeMSDOrderN,1,sizeof(int),FilePtr);
-  fwrite(NumberOfSitesMSDOrderN,NumberOfSystems,sizeof(int),FilePtr);
 
   for(i=0;i<NumberOfSystems;i++)
   {
@@ -10838,12 +10666,7 @@ void WriteRestartSample(FILE *FilePtr)
       for(j=0;j<MaxNumberOfBlocksMSDOrderN;j++)
       {
         for(k=0;k<NumberOfAdsorbateMolecules[i]+NumberOfCationMolecules[i];k++)
-        {
           fwrite(BlockDataMSDOrderN[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(VECTOR),FilePtr);
-
-          if(ComputeSiteTypeMSDOrderN)
-            fwrite(BlockDataSiteTypeMSDOrderN[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(int),FilePtr);
-        }
 
         for(k=0;k<NumberOfComponents;k++)
         {
@@ -10860,16 +10683,6 @@ void WriteRestartSample(FILE *FilePtr)
             fwrite(MsdOrderNCountPerMolecule[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(REAL),FilePtr);
             fwrite(MsdOrderNPerMolecule[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(VECTOR),FilePtr);
             fwrite(MsdOrderNPerMoleculeDirAvg[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(REAL),FilePtr);
-          }
-        }
-
-        if(ComputeSiteTypeMSDOrderN)
-        {
-          for(k=0;k<NumberOfSitesMSDOrderN[i];k++)
-          {
-            fwrite(MsdOrderNCountPerSiteType[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(REAL),FilePtr);
-            fwrite(MsdOrderNPerSiteType[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(VECTOR),FilePtr);
-            fwrite(MsdOrderNPerSiteTypeDirAvg[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(REAL),FilePtr);
           }
         }
 
@@ -11357,7 +11170,6 @@ void AllocateSampleMemory(void)
   ComputeMSDOrderN=(int*)calloc(NumberOfSystems,sizeof(int));
   SampleMSDOrderNEvery=(int*)calloc(NumberOfSystems,sizeof(int));
   WriteMSDOrderNEvery=(int*)calloc(NumberOfSystems,sizeof(int));
-  NumberOfSitesMSDOrderN=(int*)calloc(NumberOfSystems,sizeof(int));
 
   // sampling the velocity autocorrelation function using a modified order-N algorithm
   ComputeVACFOrderN=(int*)calloc(NumberOfSystems,sizeof(int));
@@ -11477,7 +11289,6 @@ void ReadRestartSample(FILE *FilePtr)
     if(ComputeProjectedLengths[i])
     {
       fread(CountProjectedLengths[i],NumberOfComponents,sizeof(REAL),FilePtr);
-      fread(ProjectedLengthsAverage[i],NumberOfComponents,sizeof(VECTOR),FilePtr);
       for(j=0;j<NumberOfComponents;j++)
         fread(ProjectedLengthsDistributionFunction[i][j],ProjectedLengthsHistogramSize[i],sizeof(VECTOR),FilePtr);
     }
@@ -12127,8 +11938,6 @@ void ReadRestartSample(FILE *FilePtr)
   fread(&NumberOfBlockElementsMSDOrderN,1,sizeof(int),FilePtr);
   fread(&MaxNumberOfBlocksMSDOrderN,1,sizeof(int),FilePtr);
   fread(&ComputeIndividualMSDOrderN,1,sizeof(int),FilePtr);
-  fread(&ComputeSiteTypeMSDOrderN,1,sizeof(int),FilePtr);
-  fread(NumberOfSitesMSDOrderN,NumberOfSystems,sizeof(int),FilePtr);
 
   SampleMeanSquaredDisplacementOrderN(ALLOCATE);
 
@@ -12145,12 +11954,7 @@ void ReadRestartSample(FILE *FilePtr)
       for(j=0;j<MaxNumberOfBlocksMSDOrderN;j++)
       {
         for(k=0;k<NumberOfAdsorbateMolecules[i]+NumberOfCationMolecules[i];k++)
-        {
           fread(BlockDataMSDOrderN[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(VECTOR),FilePtr);
-
-          if(ComputeSiteTypeMSDOrderN)
-            fread(BlockDataSiteTypeMSDOrderN[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(int),FilePtr);
-        }
 
         for(k=0;k<NumberOfComponents;k++)
         {
@@ -12169,17 +11973,6 @@ void ReadRestartSample(FILE *FilePtr)
             fread(MsdOrderNPerMoleculeDirAvg[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(REAL),FilePtr);
           }
         }
-
-        if(ComputeSiteTypeMSDOrderN)
-        {
-          for(k=0;k<NumberOfSitesMSDOrderN[i];k++)
-          {
-            fread(MsdOrderNCountPerSiteType[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(REAL),FilePtr);
-            fread(MsdOrderNPerSiteType[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(VECTOR),FilePtr);
-            fread(MsdOrderNPerSiteTypeDirAvg[i][j][k],NumberOfBlockElementsMSDOrderN,sizeof(REAL),FilePtr);
-          }
-        }
-
 
         // Onsager data
         fread(MsdOrderNTotalOnsager[i][j],NumberOfBlockElementsMSDOrderN,sizeof(VECTOR),FilePtr);

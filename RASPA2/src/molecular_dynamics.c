@@ -56,7 +56,7 @@
 
 void MolecularDynamicsSimulation(void)
 {
-  int i,j,k;
+  int i,j,k,widomi;
   REAL ran;
 
   // for a crash-recovery we skip the initialization and jump to the
@@ -402,7 +402,10 @@ void MolecularDynamicsSimulation(void)
       for(CurrentComponent=0;CurrentComponent<NumberOfComponents;CurrentComponent++)
       {
         if(Components[CurrentComponent].FractionOfWidomMove>0.0)
-          WidomMove();
+          for(widomi=0;widomi<100;widomi++)          
+          {
+            WidomMove();
+          }
       }
 
       // evolve the system a full time step

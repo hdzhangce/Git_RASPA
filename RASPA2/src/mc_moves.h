@@ -102,10 +102,6 @@ extern REAL TargetAccRatioLambdaChange;
 
 void InitializeMCMovesStatisticsAllSystems(void);
 
-
-REAL ComputeEnergyOfFractionalMoleculesAdsorbates();
-REAL ComputeEnergyOfFractionalMoleculesCations();
-
 void TranslationMove(void);
 void RandomTranslationMove(void);
 void RotationMove(void);
@@ -191,7 +187,6 @@ void PrintCBCFSwapLambdaStatistics(FILE *FilePtr);
 void PrintCFGibbsLambdaStatistics(FILE *FilePtr);
 void PrintCBCFGibbsLambdaStatistics(FILE *FilePtr);
 void PrintRXMCStatistics(FILE *FilePtr);
-void PrintExchangeFractionalParticleStatistics(FILE *FilePtr);
 
 REAL WidomAdsorbateMove(void);
 REAL WidomCationMove(void);
