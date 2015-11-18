@@ -232,6 +232,7 @@ void PrintPreSimulationStatusCurrentSystem(int system)
 
   FilePtr=OutputFilePtr[system];
 
+  fprintf(FilePtr,"Hongda's version of RASPA\n");
   fprintf(FilePtr,"Compiler and run-time data\n");
   fprintf(FilePtr,"===========================================================================\n");
 
